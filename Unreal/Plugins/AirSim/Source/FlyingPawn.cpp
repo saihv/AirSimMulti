@@ -31,7 +31,7 @@ void AFlyingPawn::detectUsbRc()
 	if (vehicleName.compare(std::string("Quad1")) == 0)
 	{
 		joystick_.getJoyStickState(0, joystick_state_);
-		rc_data_.is_connected = true;
+		rc_data_.is_connected = joystick_state_.is_connected;
 
 		if (rc_data_.is_connected)
 			UAirBlueprintLib::LogMessage(TEXT("RC Controller on USB for vehicle 1: "), "Detected", LogDebugLevel::Informational);
@@ -42,7 +42,7 @@ void AFlyingPawn::detectUsbRc()
 	if (vehicleName.compare(std::string("Quad2")) == 0)
 	{
 		joystick_.getJoyStickState(1, joystick_state_);
-		rc_data_.is_connected = true;
+		rc_data_.is_connected = joystick_state_.is_connected;
 
 		if (rc_data_.is_connected)
 			UAirBlueprintLib::LogMessage(TEXT("RC Controller on USB for vehicle 2: "), "Detected", LogDebugLevel::Informational);
@@ -53,7 +53,7 @@ void AFlyingPawn::detectUsbRc()
 	if (vehicleName.compare(std::string("Quad3")) == 0)
 	{
 		joystick_.getJoyStickState(2, joystick_state_);
-		rc_data_.is_connected = true;
+		rc_data_.is_connected = joystick_state_.is_connected;
 
 		if (rc_data_.is_connected)
 			UAirBlueprintLib::LogMessage(TEXT("RC Controller on USB for vehicle 3: "), "Detected", LogDebugLevel::Informational);
@@ -89,7 +89,7 @@ const AFlyingPawn::RCData& AFlyingPawn::getRCData()
 	else if (vehicleName.compare(std::string("Quad3")) == 0)
 		joystick_.getJoyStickState(2, joystick_state_);
 
-	rc_data_.is_connected = true;
+	rc_data_.is_connected = joystick_state_.is_connected;
 
 	if (rc_data_.is_connected) {
 		rc_data_.throttle = joyStickToRC(joystick_state_.left_y);

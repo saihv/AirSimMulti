@@ -55,7 +55,6 @@ public:
     bool getScreenshot(EPIPCameraType camera_type, TArray<uint8>& compressedPng, float& width, float& height);
     void saveScreenshot(EPIPCameraType camera_type, FString fileSavePathPrefix, int fileSuffix);
 
-	USceneCaptureComponent2D* getCaptureComponent(const EPIPCameraType type, bool if_active);
 	bool bReadPixelsStarted = false;
 	FRenderCommandFence ReadPixelFence;
 	TArray<FColor> bmp;
@@ -84,6 +83,7 @@ private:
     void deactivateMain();
     void deactivatePIP();
     void refreshCurrentMode();
+    USceneCaptureComponent2D* getCaptureComponent(const EPIPCameraType type, bool if_active);
     UTextureRenderTarget2D* getTexureRenderTarget(const EPIPCameraType type, bool if_active);
 	void ReadPixelsNonBlocking(USceneCaptureComponent2D*, TArray<FColor>);
 };

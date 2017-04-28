@@ -174,7 +174,8 @@ void UAirBlueprintLib::FollowActor(AActor* follower, const AActor* followee, con
 
 template<class UserClass>
 FInputActionBinding& UAirBlueprintLib::BindActionToKey(const FName action_name, const FKey in_key, UserClass* actor, 
-    typename FInputActionHandlerSignature::TUObjectMethodDelegate<UserClass>::FMethodPtr func)
+	typename FInputActionHandlerSignature::TUObjectMethodDelegate<UserClass>::FMethodPtr func,
+	bool shift_key, bool control_key, bool alt_key, bool command_key)
 {
     FInputActionKeyMapping action(action_name, in_key);
     
