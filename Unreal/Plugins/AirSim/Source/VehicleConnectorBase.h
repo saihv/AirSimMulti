@@ -22,7 +22,7 @@ public:
     virtual void updateRendering(float dt) = 0;
 
     //opens up channel to talk to vehicle via APIs
-    virtual void startApiServer() = 0;
+    virtual void startApiServer(std::string address) = 0;
     virtual void stopApiServer() = 0;
     virtual bool isApiServerStarted() = 0;
     virtual msr::airlib::VehicleControllerBase* getController() = 0;
