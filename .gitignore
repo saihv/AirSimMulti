@@ -311,4 +311,5 @@ deps/
 /Eigen3
 /AirLib/lib/libAirLib.a
 
+!AirLib/build
 
