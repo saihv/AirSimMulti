@@ -120,13 +120,12 @@ void MultiRotorConnector::updateRendering(float dt)
 }
 
 
-void MultiRotorConnector::startApiServer(std::string address)
+void MultiRotorConnector::startApiServer()
 {
     //TODO: remove static up cast from below?
     controller_cancelable_.reset(new msr::airlib::DroneControllerCancelable(
         vehicle_.getController()));
-    // api_server_address_ = Settings::singleton().getString("LocalHostIp", "127.0.0.1");
-	api_server_address_ = address;
+    api_server_address_ = Settings::singleton().getString("LocalHostIp", "127.0.0.1");
     rpclib_server_.reset(new msr::airlib::RpcLibServer(controller_cancelable_.get(), api_server_address_));
     rpclib_server_->start();
 

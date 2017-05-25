@@ -13,8 +13,8 @@ void ASimModeWorldMultiRotor::BeginPlay()
     if (fpv_vehicle_connector_ != nullptr) {
         //create its control server
         try {
-            fpv_vehicle_connector_->startApiServer("127.0.0.1");
-			fpv_vehicle_connector_2_->startApiServer("127.0.0.2");
+            fpv_vehicle_connector_->startApiServer();
+			// fpv_vehicle_connector_2_->startApiServer();
         }
         catch (std::exception& ex) {
             UAirBlueprintLib::LogMessage("Cannot start RpcLib Server",  ex.what(), LogDebugLevel::Failure);
@@ -31,7 +31,7 @@ void ASimModeWorldMultiRotor::Tick(float DeltaSeconds)
         auto camera_type = controller->getImageTypeForCamera(0);
         if (camera_type != DroneControllerBase::ImageType::None) { 
             if (CameraDirector != nullptr) {
-                APIPCamera* camera = CameraDirector->getCamera(0);
+                APIPCamera* camera = pawn2->getFpvCamera();
                 EPIPCameraType pip_type;
                 if (camera != nullptr) {
                     //TODO: merge these two different types?
@@ -83,7 +83,7 @@ void ASimModeWorldMultiRotor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     if (fpv_vehicle_connector_ != nullptr) {
         fpv_vehicle_connector_->stopApiServer();
-		fpv_vehicle_connector_2_->stopApiServer();
+		//fpv_vehicle_connector_2_->stopApiServer();
     }
 
 	FCameraLogger::Shutdown();
@@ -121,7 +121,6 @@ void ASimModeWorldMultiRotor::createVehicles(std::vector<VehiclePtr>& vehicles)
             }
 			else if(pawn2 == NULL)
 			{
-				fpv_vehicle_connector_2_ = vehicle;
 				pawn2 = static_cast<AFlyingPawn*>(pawn);
 			}
         }

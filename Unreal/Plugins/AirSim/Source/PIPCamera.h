@@ -61,9 +61,7 @@ public:
 	TArray<FColor> bmp;
 
 private:
-    UPROPERTY() USceneCaptureComponent2D* screen_capture_;
-	UPROPERTY() USceneCaptureComponent2D* screen_capture_2_;
-	UPROPERTY() USceneCaptureComponent2D* screen_capture_3_;
+    UPROPERTY() USceneCaptureComponent2D* scene_capture_;
     UPROPERTY() USceneCaptureComponent2D* depth_capture_;
     UPROPERTY() USceneCaptureComponent2D* seg_capture_;
     UPROPERTY() UCameraComponent*  camera_;
@@ -86,4 +84,7 @@ private:
     void refreshCurrentMode();
     UTextureRenderTarget2D* getTexureRenderTarget(const EPIPCameraType type, bool if_active);
 	void ReadPixelsNonBlocking(USceneCaptureComponent2D*, TArray<FColor>);
+
+	FGraphEventRef RenderStatus;
+	FGraphEventRef CompletionStatus;
 };

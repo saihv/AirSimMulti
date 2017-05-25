@@ -37,10 +37,12 @@ private:
 	virtual uint32 Run();
 	virtual void Stop();
 
+	void SaveImage();
 	void ReadPixelsNonBlocking(TArray<FColor>& bmp, unsigned int id);
 	void EnsureCompletion();
 
 	unsigned int shotNum = 0;
 	unsigned int currentId;
 	FGraphEventRef RenderStatus;
+	FGraphEventRef CompletionStatus;
 };
