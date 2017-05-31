@@ -71,23 +71,23 @@ void ACameraDirector::enableManualBindings(bool enable)
 void ACameraDirector::inputManualLeft(float val)
 {
 	if (!FMath::IsNearlyEqual(val, 0.f)) {
-		camera_location_manual_ += FVector(0, -val * 10, 0);
+		camera_location_manual_ += FVector(-val * 10, 0, 0);
 	}
 }
 void ACameraDirector::inputManualRight(float val)
 {
 	if (!FMath::IsNearlyEqual(val, 0.f))
-		camera_location_manual_ += FVector(0, val * 10, 0);
+		camera_location_manual_ += FVector(val * 10, 0, 0);
 }
 void ACameraDirector::inputManualForward(float val)
 {
 	if (!FMath::IsNearlyEqual(val, 0.f))
-		camera_location_manual_ += FVector(val * 10, 0, 0);
+		camera_location_manual_ += FVector(0, val * 10, 0);
 }
 void ACameraDirector::inputManualBackward(float val)
 {
 	if (!FMath::IsNearlyEqual(val, 0.f))
-		camera_location_manual_ += FVector(-val * 10, 0, 0);
+		camera_location_manual_ += FVector(0, -val * 10, 0);
 }
 void ACameraDirector::inputManualMoveUp(float val)
 {
@@ -171,8 +171,8 @@ bool ACameraDirector::togglePIPSeg()
 
 bool ACameraDirector::togglePIPAll()
 {
-	if (toggled == 0) {
-		toggled++;
+	//if (toggled == 0) {
+	//	toggled++;
 		if (!checkCameraRefs())
 			return false;
 		EPIPCameraType main_state = ExternalCamera->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_ALL);
@@ -182,7 +182,7 @@ bool ACameraDirector::togglePIPAll()
 			return main_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
 		else
 			return pip_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
-	}
+	//}
 	return false;
 }
 

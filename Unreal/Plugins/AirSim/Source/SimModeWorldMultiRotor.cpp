@@ -27,7 +27,8 @@ void ASimModeWorldMultiRotor::Tick(float DeltaSeconds)
     if (fpv_vehicle_connector_ != nullptr && fpv_vehicle_connector_->isApiServerStarted() && getVehicleCount() > 0) {
 
         using namespace msr::airlib;
-        auto controller = static_cast<DroneControllerBase*>(fpv_vehicle_connector_->getController());
+        /*
+		auto controller = static_cast<DroneControllerBase*>(fpv_vehicle_connector_->getController());
         auto camera_type = controller->getImageTypeForCamera(0);
         if (camera_type != DroneControllerBase::ImageType::None) { 
             if (CameraDirector != nullptr) {
@@ -52,7 +53,7 @@ void ASimModeWorldMultiRotor::Tick(float DeltaSeconds)
                 }
             }
         }
-
+		*/
 		if (isRecording() && record_file.is_open()) {
 			//auto physics_body = static_cast<msr::airlib::PhysicsBody*>(fpv_vehicle_connector_->getPhysicsBody());
 			//auto kinematics = physics_body->getKinematics();
@@ -76,7 +77,7 @@ void ASimModeWorldMultiRotor::Tick(float DeltaSeconds)
 		}
     }
 
-    Super::Tick(DeltaSeconds);
+    Super::Tick(0.016);
 }
 
 void ASimModeWorldMultiRotor::EndPlay(const EEndPlayReason::Type EndPlayReason)

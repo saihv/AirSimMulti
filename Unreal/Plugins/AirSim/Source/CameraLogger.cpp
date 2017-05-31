@@ -35,12 +35,12 @@ void FCameraLogger::ReadPixelsNonBlocking(TArray<FColor>& bmp, unsigned int id)
 	{
 	case 1:
 		cam = GameThread->pawn1->getFpvCamera();
-		capture = cam->getCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_SEG, true);
+		capture = cam->getCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_DEPTH, true);
 		break;
 
 	case 2:
 		cam = GameThread->pawn2->getFpvCamera();
-		capture = cam->getCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_DEPTH, true);
+		capture = cam->getCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_SCENE, true);
 		break;
 
 	default:
