@@ -116,7 +116,7 @@ uint32 FCameraLogger::Run()
 			if (!imageSavedOk)
 				UAirBlueprintLib::LogMessage(TEXT("File save failed to:"), filePath, LogDebugLevel::Failure);
 			else {
-				auto physics_body = static_cast<msr::airlib::PhysicsBody*>(GameThread->fpv_vehicle_connector_->getPhysicsBody());
+				auto physics_body = static_cast<msr::airlib::PhysicsBody*>(GameThread->fpv_vehicle_connector_[0]->getPhysicsBody());
 				auto kinematics = physics_body->getKinematics();
 
 				GameThread->record_file << msr::airlib::Utils::getTimeSinceEpochMillis() << "\t";    
@@ -150,7 +150,7 @@ uint32 FCameraLogger::Run()
 			if (!imageSavedOk)
 				UAirBlueprintLib::LogMessage(TEXT("File save failed to:"), filePath, LogDebugLevel::Failure);
 			else {
-				auto physics_body = static_cast<msr::airlib::PhysicsBody*>(GameThread->fpv_vehicle_connector_->getPhysicsBody());
+				auto physics_body = static_cast<msr::airlib::PhysicsBody*>(GameThread->fpv_vehicle_connector_[1]->getPhysicsBody());
 				auto kinematics = physics_body->getKinematics();
 
 				GameThread->record_file << msr::airlib::Utils::getTimeSinceEpochMillis() << "\t";

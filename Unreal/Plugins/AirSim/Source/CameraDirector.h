@@ -82,6 +82,4 @@ private:
 
 	FVector camera_location_manual_;
 	FRotator camera_rotation_manual_;
-
-	int toggled = 0;
 };

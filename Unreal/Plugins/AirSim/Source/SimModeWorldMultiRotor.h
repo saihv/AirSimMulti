@@ -18,8 +18,7 @@ public:
 	AFlyingPawn* pawn1;
 	AFlyingPawn* pawn2;
 
-	std::shared_ptr<VehicleConnectorBase> fpv_vehicle_connector_;
-	std::shared_ptr<VehicleConnectorBase> fpv_vehicle_connector_2_;
+	std::vector <std::shared_ptr<VehicleConnectorBase>> fpv_vehicle_connector_;
 
 protected:
     virtual void createVehicles(std::vector<VehiclePtr>& vehicles) override;
