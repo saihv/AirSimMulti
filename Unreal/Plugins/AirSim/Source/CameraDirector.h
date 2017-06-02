@@ -43,6 +43,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PIP")
 		bool togglePIPSeg();
 	UFUNCTION(BlueprintCallable, Category = "PIP")
+		bool togglePIPNew();
+	UFUNCTION(BlueprintCallable, Category = "PIP")
+		bool togglePIPAnother();
+	UFUNCTION(BlueprintCallable, Category = "PIP")
 		bool togglePIPAll();
 
 	UFUNCTION(BlueprintCallable, Category = "PIP")

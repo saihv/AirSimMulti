@@ -14,6 +14,12 @@ APIPCamera::APIPCamera()
 
     static ConstructorHelpers::FObjectFinder<UTextureRenderTarget2D> seg_render_target_finder(TEXT("TextureRenderTarget2D'/AirSim/HUDAssets/SegmentationRenderTarget.SegmentationRenderTarget'"));
     seg_render_target_ = seg_render_target_finder.Object;
+
+	static ConstructorHelpers::FObjectFinder<UTextureRenderTarget2D> new_render_target_finder(TEXT("TextureRenderTarget2D'/AirSim/HUDAssets/NewRenderTarget.NewRenderTarget'"));
+	new_render_target_ = new_render_target_finder.Object;
+
+	static ConstructorHelpers::FObjectFinder<UTextureRenderTarget2D> another_render_target_finder(TEXT("TextureRenderTarget2D'/AirSim/HUDAssets/AnotherRenderTarget.AnotherRenderTarget'"));
+	another_render_target_ = another_render_target_finder.Object;
 }
 
 void APIPCamera::PostInitializeComponents()
@@ -23,10 +29,10 @@ void APIPCamera::PostInitializeComponents()
     camera_ = UAirBlueprintLib::GetActorComponent<UCameraComponent>(this, TEXT("CameraComponent"));
 
     scene_capture_ = UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent"));
-	//screen_capture_2_ = UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent2"));
-	//screen_capture_3_ = UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent3"));
     depth_capture_ = UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent2"));
     seg_capture_ = UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent3"));
+	new_capture_ = UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent4"));
+	another_capture_ = UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent5"));
 }
 
 void APIPCamera::setToMainView()
@@ -46,6 +52,8 @@ void APIPCamera::setToPIPView()
     activateCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_SCENE);
     activateCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_DEPTH);
     activateCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_SEG);
+	activateCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_NEW);
+	activateCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_ANOTHER);
 
     camera_mode_ = EPIPCameraMode::PIP_CAMERA_MODE_PIP;
 }
@@ -71,12 +79,12 @@ void APIPCamera::activateCaptureComponent(const EPIPCameraType type)
 {
     USceneCaptureComponent2D* capture = getCaptureComponent(type, true);
     if (capture != nullptr) {
-        capture->TextureTarget = getTexureRenderTarget(type, false);
+        capture->TextureTarget = getTextureRenderTarget(type, false);
         capture->Activate();
     }
 }
 
-UTextureRenderTarget2D* APIPCamera::getTexureRenderTarget(const EPIPCameraType type, bool if_active)
+UTextureRenderTarget2D* APIPCamera::getTextureRenderTarget(const EPIPCameraType type, bool if_active)
 {
     switch (type) {
     case EPIPCameraType::PIP_CAMERA_TYPE_SCENE:
@@ -91,6 +99,14 @@ UTextureRenderTarget2D* APIPCamera::getTexureRenderTarget(const EPIPCameraType t
         if (!if_active || (static_cast<uint8>(enabled_camera_types_) & static_cast<uint8>(EPIPCameraType::PIP_CAMERA_TYPE_SEG)))
             return seg_render_target_;
         return nullptr;
+	case EPIPCameraType::PIP_CAMERA_TYPE_NEW:
+		if (!if_active || (static_cast<uint8>(enabled_camera_types_) & static_cast<uint8>(EPIPCameraType::PIP_CAMERA_TYPE_NEW)))
+			return new_render_target_;
+		return nullptr;
+	case EPIPCameraType::PIP_CAMERA_TYPE_ANOTHER:
+		if (!if_active || (static_cast<uint8>(enabled_camera_types_) & static_cast<uint8>(EPIPCameraType::PIP_CAMERA_TYPE_ANOTHER)))
+			return another_render_target_;
+		return nullptr;
     case EPIPCameraType::PIP_CAMERA_TYPE_NONE:
         return nullptr;
     default:
@@ -115,6 +131,14 @@ USceneCaptureComponent2D* APIPCamera::getCaptureComponent(const EPIPCameraType t
         if (!if_active || (static_cast<uint8>(enabled_camera_types_) & static_cast<uint8>(EPIPCameraType::PIP_CAMERA_TYPE_SEG)))
             return seg_capture_;
         return nullptr;
+	case EPIPCameraType::PIP_CAMERA_TYPE_NEW:
+		if (!if_active || (static_cast<uint8>(enabled_camera_types_) & static_cast<uint8>(EPIPCameraType::PIP_CAMERA_TYPE_NEW)))
+			return new_capture_;
+		return nullptr;
+	case EPIPCameraType::PIP_CAMERA_TYPE_ANOTHER:
+		if (!if_active || (static_cast<uint8>(enabled_camera_types_) & static_cast<uint8>(EPIPCameraType::PIP_CAMERA_TYPE_ANOTHER)))
+			return another_capture_;
+		return nullptr;
     case EPIPCameraType::PIP_CAMERA_TYPE_NONE:
         return nullptr;
     default:
@@ -130,6 +154,8 @@ void APIPCamera::deactivatePIP()
     deactivateCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_SCENE);
     deactivateCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_DEPTH);
     deactivateCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_SEG);
+	deactivateCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_NEW);
+	deactivateCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_ANOTHER);
 }
 
 

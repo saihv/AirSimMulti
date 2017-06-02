@@ -169,6 +169,33 @@ bool ACameraDirector::togglePIPSeg()
         return pip_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
 }
 
+bool ACameraDirector::togglePIPNew()
+{
+	if (!checkCameraRefs())
+		return false;
+	EPIPCameraType main_state = ExternalCamera->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_NEW);
+	EPIPCameraType pip_state = TargetPawn->getFpvCamera()->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_NEW);
+
+	if (ExternalCamera->getCameraMode() == EPIPCameraMode::PIP_CAMERA_MODE_PIP)
+		return main_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
+	else
+		return pip_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
+}
+
+bool ACameraDirector::togglePIPAnother()
+{
+	if (!checkCameraRefs())
+		return false;
+	EPIPCameraType main_state = ExternalCamera->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_ANOTHER);
+	EPIPCameraType pip_state = TargetPawn->getFpvCamera()->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_ANOTHER);
+
+	if (ExternalCamera->getCameraMode() == EPIPCameraMode::PIP_CAMERA_MODE_PIP)
+		return main_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
+	else
+		return pip_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
+}
+
+
 bool ACameraDirector::togglePIPAll()
 {
 	if (!checkCameraRefs())
