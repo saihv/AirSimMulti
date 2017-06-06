@@ -1,5 +1,6 @@
 #include <AirSim.h>
 #include <CameraLogger.h>
+#include "TaskGraphInterfaces.h"
 
 FCameraLogger* FCameraLogger::Runnable = NULL;
 
@@ -34,13 +35,28 @@ void FCameraLogger::ReadPixelsNonBlocking(TArray<FColor>& bmp, unsigned int id)
 	switch (id)
 	{
 	case 1:
-		cam = GameThread->pawn1->getFpvCamera();
+		cam = GameThread->game_pawns[0]->getFpvCamera();
 		capture = cam->getCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_SCENE, true);
 		break;
 
 	case 2:
-		cam = GameThread->pawn2->getFpvCamera();
+		cam = GameThread->game_pawns[1]->getFpvCamera();
 		capture = cam->getCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_DEPTH, true);
+		break;
+
+	case 3:
+		cam = GameThread->game_pawns[2]->getFpvCamera();
+		capture = cam->getCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_SEG, true);
+		break;
+
+	case 4:
+		cam = GameThread->game_pawns[3]->getFpvCamera();
+		capture = cam->getCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_NEW, true);
+		break;
+
+	case 5:
+		cam = GameThread->game_pawns[4]->getFpvCamera();
+		capture = cam->getCaptureComponent(EPIPCameraType::PIP_CAMERA_TYPE_ANOTHER, true);
 		break;
 
 	default:
@@ -72,7 +88,7 @@ void FCameraLogger::ReadPixelsNonBlocking(TArray<FColor>& bmp, unsigned int id)
 					FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)
 				};
 
-				bReadPixelsStarted = true;
+				// bReadPixelsStarted = true;
 
 				ENQUEUE_UNIQUE_RENDER_COMMAND_ONEPARAMETER(
 					ReadSurfaceCommand,
@@ -94,77 +110,88 @@ uint32 FCameraLogger::Run()
 {
 	while (StopTaskCounter.GetValue() == 0)
 	{
-		if (!bReadPixelsStarted && currentId != 1)
+		ReadPixelsNonBlocking(imageColor, currentId);
+
+		// Declare task graph 'RenderStatus' in order to check on the status of the queued up render command
+		DECLARE_CYCLE_STAT(TEXT("FNullGraphTask.CheckRenderStatus"), STAT_FNullGraphTask_CheckRenderStatus, STATGROUP_TaskGraphTasks);
+		RenderStatus = TGraphTask<FNullGraphTask>::CreateTask(NULL).ConstructAndDispatchWhenReady(GET_STATID(STAT_FNullGraphTask_CheckRenderStatus), ENamedThreads::RenderThread);
+		// Now queue a dependent task to run when the rendering operation is complete.
+		CompletionStatus = FSimpleDelegateGraphTask::CreateAndDispatchWhenReady(
+			FSimpleDelegateGraphTask::FDelegate::CreateLambda([=]()
 		{
-			currentId = 1;
-			ReadPixelsNonBlocking(imageColor, currentId);
-
-			DECLARE_CYCLE_STAT(TEXT("FNullGraphTask.CheckRenderStatus"), STAT_FNullGraphTask_CheckRenderStatus, STATGROUP_TaskGraphTasks);
-			RenderStatus = TGraphTask<FNullGraphTask>::CreateTask(NULL).ConstructAndDispatchWhenReady(GET_STATID(STAT_FNullGraphTask_CheckRenderStatus), ENamedThreads::RenderThread);
-		}				
-
-		if (bReadPixelsStarted && currentId == 1 && (!RenderStatus.GetReference() || RenderStatus->IsComplete())) {
-			bReadPixelsStarted = false;
-			RenderStatus = NULL;
-
-			TArray<uint8> compressedPng;
-			FIntPoint dest(width, height);
-			FImageUtils::CompressImageArray(dest.X, dest.Y, imageColor, compressedPng);
-			FString filePath = imagePath + "_Quad1_" + FString::FromInt(shotNum) + ".png";
-			bool imageSavedOk = FFileHelper::SaveArrayToFile(compressedPng, *filePath);
-
-			if (!imageSavedOk)
-				UAirBlueprintLib::LogMessage(TEXT("File save failed to:"), filePath, LogDebugLevel::Failure);
-			else {
-				auto physics_body = static_cast<msr::airlib::PhysicsBody*>(GameThread->fpv_vehicle_connector_[0]->getPhysicsBody());
-				auto kinematics = physics_body->getKinematics();
-
-				GameThread->record_file << msr::airlib::Utils::getTimeSinceEpochMillis() << "\t";    
-				GameThread->record_file << kinematics.pose.position.x() << "\t" << kinematics.pose.position.y() << "\t" << kinematics.pose.position.z() << "\t";
-				GameThread->record_file << kinematics.pose.orientation.w() << "\t" << kinematics.pose.orientation.x() << "\t" << kinematics.pose.orientation.y() << "\t" << kinematics.pose.orientation.z() << "\t";
-				GameThread->record_file << "\n";
-
-				UAirBlueprintLib::LogMessage(TEXT("Screenshot saved to:"), filePath, LogDebugLevel::Success);
+			if (StopTaskCounter.GetValue() == 0) {
+				FCameraLogger::SaveImage(currentId);
 			}
-		}		
-		
-		if (!bReadPixelsStarted && currentId != 2)
-		{
-			currentId = 2;
-			ReadPixelsNonBlocking(imageColor, currentId);
-			
-			DECLARE_CYCLE_STAT(TEXT("FNullGraphTask.CheckRenderStatus"), STAT_FNullGraphTask_CheckRenderStatus, STATGROUP_TaskGraphTasks);
-			RenderStatus = TGraphTask<FNullGraphTask>::CreateTask(NULL).ConstructAndDispatchWhenReady(GET_STATID(STAT_FNullGraphTask_CheckRenderStatus), ENamedThreads::RenderThread);
+		}),
+			TStatId(),
+			RenderStatus
+			);
+					// wait for both tasks to complete.
+		FTaskGraphInterface::Get().WaitUntilTaskCompletes(CompletionStatus);
+	}
+
+	return 0;
+}
+
+void FCameraLogger::SaveImage(int id)
+{
+	bool complete = (RenderStatus.GetReference() && RenderStatus->IsComplete());
+
+	if (imageColor.Num() > 0 && complete) {
+		RenderStatus = NULL;
+
+		TArray<uint8> compressedPng;
+		FIntPoint dest(width, height);
+		FImageUtils::CompressImageArray(dest.X, dest.Y, imageColor, compressedPng);
+
+		std::string vehicleId;
+
+		switch (id) {
+		case 1:
+			vehicleId = "_Quad1_";
+			break;
+		case 2:
+			vehicleId = "_Quad2_";
+			break;
+		case 3:
+			vehicleId = "_Quad3_";
+			break;
+		case 4:
+			vehicleId = "_Quad4_";
+			break;
+		case 5:
+			vehicleId = "_Quad5_";
+			break;
 		}
 
-		if (bReadPixelsStarted && currentId == 2 && (!RenderStatus.GetReference() || RenderStatus->IsComplete())) {
-			bReadPixelsStarted = false;
-			RenderStatus = NULL;
+		FString filePath = imagePath + FString(vehicleId.c_str()) + FString::FromInt(imagesSaved) + ".png";
+		bool imageSavedOk = FFileHelper::SaveArrayToFile(compressedPng, *filePath);
 
-			TArray<uint8> compressedPng;
-			FIntPoint dest(width, height);
-			FImageUtils::CompressImageArray(dest.X, dest.Y, imageColor, compressedPng);
-			FString filePath = imagePath + "_Quad2_" + FString::FromInt(shotNum) + ".png";
-			bool imageSavedOk = FFileHelper::SaveArrayToFile(compressedPng, *filePath);
+		// If render command is complete, save image along with position and orientation
 
-			if (!imageSavedOk)
-				UAirBlueprintLib::LogMessage(TEXT("File save failed to:"), filePath, LogDebugLevel::Failure);
-			else {
-				auto physics_body = static_cast<msr::airlib::PhysicsBody*>(GameThread->fpv_vehicle_connector_[1]->getPhysicsBody());
-				auto kinematics = physics_body->getKinematics();
+		if (!imageSavedOk)
+			UAirBlueprintLib::LogMessage(TEXT("FAILED to save screenshot to:"), filePath, LogDebugLevel::Failure);
+		else {
+			auto physics_body = static_cast<msr::airlib::PhysicsBody*>(GameThread->fpv_vehicle_connector_[0]->getPhysicsBody());
+			auto kinematics = physics_body->getKinematics();
 
-				GameThread->record_file << msr::airlib::Utils::getTimeSinceEpochMillis() << "\t";
-				GameThread->record_file << kinematics.pose.position.x() << "\t" << kinematics.pose.position.y() << "\t" << kinematics.pose.position.z() << "\t";
-				GameThread->record_file << kinematics.pose.orientation.w() << "\t" << kinematics.pose.orientation.x() << "\t" << kinematics.pose.orientation.y() << "\t" << kinematics.pose.orientation.z() << "\t";
-				GameThread->record_file << "\n";
+			GameThread->record_file << msr::airlib::Utils::getTimeSinceEpochMillis() << "\t";
+			GameThread->record_file << kinematics.pose.position.x() << "\t" << kinematics.pose.position.y() << "\t" << kinematics.pose.position.z() << "\t";
+			GameThread->record_file << kinematics.pose.orientation.w() << "\t" << kinematics.pose.orientation.x() << "\t" << kinematics.pose.orientation.y() << "\t" << kinematics.pose.orientation.z() << "\t";
+			GameThread->record_file << "\n";
 
-				UAirBlueprintLib::LogMessage(TEXT("Screenshot saved to:"), filePath, LogDebugLevel::Success);
+			UAirBlueprintLib::LogMessage(TEXT("Screenshot saved to:"), filePath, LogDebugLevel::Success);
+			
+
+			if (currentId < 5)
+				currentId++;
+			else if (currentId == 5)
+			{
+				currentId = 1;
+				imagesSaved++;
 			}
-			shotNum++;
-		}		
-
+		}	
 	}
-	return 0;
 }
 
 void FCameraLogger::Stop()

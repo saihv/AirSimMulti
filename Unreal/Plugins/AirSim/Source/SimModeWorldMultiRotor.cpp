@@ -34,7 +34,7 @@ void ASimModeWorldMultiRotor::Tick(float DeltaSeconds)
         auto camera_type = controller->getImageTypeForCamera(0);
         if (camera_type != DroneControllerBase::ImageType::None) { 
             if (CameraDirector != nullptr) {
-                APIPCamera* camera = pawn2->getFpvCamera();
+                APIPCamera* camera = game_pawns[0]->getFpvCamera();
                 EPIPCameraType pip_type;
                 if (camera != nullptr) {
                     //TODO: merge these two different types?
@@ -113,13 +113,31 @@ void ASimModeWorldMultiRotor::createVehicles(std::vector<VehiclePtr>& vehicles)
 			if ((*((AFlyingPawn*)(pawn))).VehicleName.Equals(TEXT("Quad1"), ESearchCase::CaseSensitive))
 			{
 				fpv_vehicle_connector_.push_back(vehicle);
-				pawn1 = static_cast<AFlyingPawn*>(pawn);
+				game_pawns.push_back(static_cast<AFlyingPawn*>(pawn));
 			}
 			 
 			else if ((*((AFlyingPawn*)(pawn))).VehicleName.Equals(TEXT("Quad2"), ESearchCase::CaseSensitive))
 			{
 				fpv_vehicle_connector_.push_back(vehicle);
-				pawn2 = static_cast<AFlyingPawn*>(pawn);
+				game_pawns.push_back(static_cast<AFlyingPawn*>(pawn));
+			}
+
+			else if ((*((AFlyingPawn*)(pawn))).VehicleName.Equals(TEXT("Quad3"), ESearchCase::CaseSensitive))
+			{
+				fpv_vehicle_connector_.push_back(vehicle);
+				game_pawns.push_back(static_cast<AFlyingPawn*>(pawn));
+			}
+
+			else if ((*((AFlyingPawn*)(pawn))).VehicleName.Equals(TEXT("Quad4"), ESearchCase::CaseSensitive))
+			{
+				fpv_vehicle_connector_.push_back(vehicle);
+				game_pawns.push_back(static_cast<AFlyingPawn*>(pawn));
+			}
+
+			else if ((*((AFlyingPawn*)(pawn))).VehicleName.Equals(TEXT("Quad5"), ESearchCase::CaseSensitive))
+			{
+				fpv_vehicle_connector_.push_back(vehicle);
+				game_pawns.push_back(static_cast<AFlyingPawn*>(pawn));
 			}
         }
         //else we don't have vehicle for this pawn
