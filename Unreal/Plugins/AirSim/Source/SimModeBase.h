@@ -36,11 +36,10 @@ public:
     virtual void stopRecording();
     virtual bool isRecording();
     FString getRecordingPath();
-
+	std::ofstream record_file;
     std::string record_filename = "airsim_rec";    
 protected:
     virtual void setupInputBindings();
     bool is_recording;
-    std::ofstream record_file;
     int record_tick_count;
 };

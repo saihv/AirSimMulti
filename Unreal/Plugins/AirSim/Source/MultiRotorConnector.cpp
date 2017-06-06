@@ -110,9 +110,9 @@ void MultiRotorConnector::updateRendering(float dt)
 	}
 
     //update rotor animations
-    for (unsigned int i = 0; i < vehicle_.vertexCount(); ++i) {
-        vehicle_pawn_->setRotorSpeed(i, rotor_speeds_[i] * rotor_directions_[i]);
-    }
+    //for (unsigned int i = 0; i < vehicle_.vertexCount(); ++i) {
+   //     vehicle_pawn_->setRotorSpeed(i, rotor_speeds_[i] * rotor_directions_[i]);
+    //}
 
     for (auto i = 0; i < controller_messages_.size(); ++i) {
         UAirBlueprintLib::LogMessage(FString(controller_messages_[i].c_str()), TEXT(""), LogDebugLevel::Success, 30);

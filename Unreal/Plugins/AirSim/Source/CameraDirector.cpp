@@ -2,23 +2,20 @@
 #include "CameraDirector.h"
 #include "AirBlueprintLib.h"
 
-
 ACameraDirector::ACameraDirector()
 {
-	PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = true;
 }
 
 void ACameraDirector::BeginPlay()
 {
-	setupInputBindings();
-
+	setupInputBindings(); 
 	Super::BeginPlay();
 }
 
-void ACameraDirector::Tick(float DeltaTime)
+void ACameraDirector::Tick( float DeltaTime )
 {
-	Super::Tick(DeltaTime);
-
+    Super::Tick( DeltaTime );
 	if (mode_ == ECameraDirectorMode::CAMERA_DIRECTOR_MODE_MANUAL) {
 		ExternalCamera->SetActorLocationAndRotation(camera_location_manual_, camera_rotation_manual_);
 	}
@@ -42,13 +39,14 @@ void ACameraDirector::setMode(ECameraDirectorMode mode)
 		enableManualBindings(false);
 }
 
+
 void ACameraDirector::setupInputBindings()
 {
-	this->EnableInput(this->GetWorld()->GetFirstPlayerController());
+    this->EnableInput(this->GetWorld()->GetFirstPlayerController());
 
-	UAirBlueprintLib::BindActionToKey("InputEventFpvView", EKeys::LeftBracket, this, &ACameraDirector::InputEventFpvView);
-	UAirBlueprintLib::BindActionToKey("InputEventFlyWithView", EKeys::RightBracket, this, &ACameraDirector::InputEventFlyWithView);
-	UAirBlueprintLib::BindActionToKey("InputEventGroundView", EKeys::Backslash, this, &ACameraDirector::InputEventGroundView);
+    UAirBlueprintLib::BindActionToKey("InputEventFpvView", EKeys::LeftBracket, this, &ACameraDirector::InputEventFpvView);
+    UAirBlueprintLib::BindActionToKey("InputEventFlyWithView", EKeys::RightBracket, this, &ACameraDirector::InputEventFlyWithView);
+    UAirBlueprintLib::BindActionToKey("InputEventGroundView", EKeys::Backslash, this, &ACameraDirector::InputEventGroundView);
 	UAirBlueprintLib::BindActionToKey("InputEventManualView", EKeys::Semicolon, this, &ACameraDirector::InputEventManualView);
 
 	left_binding_ = &UAirBlueprintLib::BindAxisToKey("inputManualArrowLeft", EKeys::Left, this, &ACameraDirector::inputManualLeft);
@@ -73,23 +71,23 @@ void ACameraDirector::enableManualBindings(bool enable)
 void ACameraDirector::inputManualLeft(float val)
 {
 	if (!FMath::IsNearlyEqual(val, 0.f)) {
-		camera_location_manual_ += FVector(0, -val * 10, 0);
+		camera_location_manual_ += FVector(-val * 10, 0, 0);
 	}
 }
 void ACameraDirector::inputManualRight(float val)
 {
 	if (!FMath::IsNearlyEqual(val, 0.f))
-		camera_location_manual_ += FVector(0, val * 10, 0);
+		camera_location_manual_ += FVector(val * 10, 0, 0);
 }
 void ACameraDirector::inputManualForward(float val)
 {
 	if (!FMath::IsNearlyEqual(val, 0.f))
-		camera_location_manual_ += FVector(val * 10, 0, 0);
+		camera_location_manual_ += FVector(0, val * 10, 0);
 }
 void ACameraDirector::inputManualBackward(float val)
 {
 	if (!FMath::IsNearlyEqual(val, 0.f))
-		camera_location_manual_ += FVector(-val * 10, 0, 0);
+		camera_location_manual_ += FVector(0, -val * 10, 0);
 }
 void ACameraDirector::inputManualMoveUp(float val)
 {
@@ -125,51 +123,78 @@ void ACameraDirector::inputManualDownPitch(float val)
 
 bool ACameraDirector::checkCameraRefs()
 {
-	if (ExternalCamera == nullptr || TargetPawn == nullptr || TargetPawn->getFpvCamera() == nullptr) {
-		UAirBlueprintLib::LogMessage("Cannot toggle PIP camera because FPV pwn camera and/or external camera is not set", "", LogDebugLevel::Failure, 60);
-		return false;
-	}
-	return true;
+    if (ExternalCamera == nullptr || TargetPawn == nullptr || TargetPawn->getFpvCamera() == nullptr) {
+        UAirBlueprintLib::LogMessage("Cannot toggle PIP camera because FPV pwn camera and/or external camera is not set", "", LogDebugLevel::Failure, 60);
+        return false;
+    }
+    return true;
 }
 
 bool ACameraDirector::togglePIPScene()
 {
-	if (!checkCameraRefs())
-		return false;
-	EPIPCameraType main_state = ExternalCamera->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_SCENE);
-	EPIPCameraType pip_state = TargetPawn->getFpvCamera()->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_SCENE);
+    if (!checkCameraRefs())
+        return false;
+    EPIPCameraType main_state = ExternalCamera->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_SCENE);
+    EPIPCameraType pip_state = TargetPawn->getFpvCamera()->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_SCENE);
 
-	if (ExternalCamera->getCameraMode() == EPIPCameraMode::PIP_CAMERA_MODE_PIP)
-		return main_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
-	else
-		return pip_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
+    if (ExternalCamera->getCameraMode() == EPIPCameraMode::PIP_CAMERA_MODE_PIP)
+        return main_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
+    else
+        return pip_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
 }
 
 bool ACameraDirector::togglePIPDepth()
 {
-	if (!checkCameraRefs())
-		return false;
-	EPIPCameraType main_state = ExternalCamera->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_DEPTH);
-	EPIPCameraType pip_state = TargetPawn->getFpvCamera()->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_DEPTH);
+    if (!checkCameraRefs())
+        return false;
+    EPIPCameraType main_state = ExternalCamera->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_DEPTH);
+    EPIPCameraType pip_state = TargetPawn->getFpvCamera()->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_DEPTH);
 
-	if (ExternalCamera->getCameraMode() == EPIPCameraMode::PIP_CAMERA_MODE_PIP)
-		return main_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
-	else
-		return pip_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
+    if (ExternalCamera->getCameraMode() == EPIPCameraMode::PIP_CAMERA_MODE_PIP)
+        return main_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
+    else
+        return pip_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
 }
 
 bool ACameraDirector::togglePIPSeg()
 {
+    if (!checkCameraRefs())
+        return false;
+    EPIPCameraType main_state = ExternalCamera->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_SEG);
+    EPIPCameraType pip_state = TargetPawn->getFpvCamera()->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_SEG);
+
+    if (ExternalCamera->getCameraMode() == EPIPCameraMode::PIP_CAMERA_MODE_PIP)
+        return main_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
+    else
+        return pip_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
+}
+
+bool ACameraDirector::togglePIPNew()
+{
 	if (!checkCameraRefs())
 		return false;
-	EPIPCameraType main_state = ExternalCamera->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_SEG);
-	EPIPCameraType pip_state = TargetPawn->getFpvCamera()->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_SEG);
+	EPIPCameraType main_state = ExternalCamera->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_NEW);
+	EPIPCameraType pip_state = TargetPawn->getFpvCamera()->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_NEW);
 
 	if (ExternalCamera->getCameraMode() == EPIPCameraMode::PIP_CAMERA_MODE_PIP)
 		return main_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
 	else
 		return pip_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
 }
+
+bool ACameraDirector::togglePIPAnother()
+{
+	if (!checkCameraRefs())
+		return false;
+	EPIPCameraType main_state = ExternalCamera->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_ANOTHER);
+	EPIPCameraType pip_state = TargetPawn->getFpvCamera()->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_ANOTHER);
+
+	if (ExternalCamera->getCameraMode() == EPIPCameraMode::PIP_CAMERA_MODE_PIP)
+		return main_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
+	else
+		return pip_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
+}
+
 
 bool ACameraDirector::togglePIPAll()
 {
@@ -177,19 +202,19 @@ bool ACameraDirector::togglePIPAll()
 		return false;
 	EPIPCameraType main_state = ExternalCamera->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_ALL);
 	EPIPCameraType pip_state = TargetPawn->getFpvCamera()->toggleEnableCameraTypes(EPIPCameraType::PIP_CAMERA_TYPE_ALL);
-
 	if (ExternalCamera->getCameraMode() == EPIPCameraMode::PIP_CAMERA_MODE_PIP)
 		return main_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
 	else
 		return pip_state != EPIPCameraType::PIP_CAMERA_TYPE_NONE;
+	return false;
 }
 
 
 APIPCamera* ACameraDirector::getCamera(int id)
 {
-	//TODO: support multiple camera
-	if (TargetPawn != nullptr)
-		return TargetPawn->getFpvCamera();
-	else
-		return nullptr;
+    //TODO: support multiple camera
+    if (TargetPawn != nullptr)
+        return TargetPawn->getFpvCamera();
+    else
+        return nullptr;
 }
