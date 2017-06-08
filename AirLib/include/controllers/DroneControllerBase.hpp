@@ -11,6 +11,7 @@
 #include "common/CommonStructs.hpp"
 #include "VehicleControllerBase.hpp"
 #include "DroneCommon.hpp"
+#include "common/common_utils/WorkerThread.hpp"
 
 namespace msr { namespace airlib {
 
@@ -68,6 +69,11 @@ public: //types
         All = 255
     };
     typedef common_utils::EnumFlags<ImageType>  ImageTypeFlags;
+
+	enum class LandedState : uint {
+		Landed = 0,
+		Flying = 1
+	};
 
 public: //interface for outside world
     /// The drone must be armed before it will fly.  Set arm to true to arm the drone.  
@@ -184,6 +190,8 @@ public: //interface for outside world
 
 	/// Get the current orientation (or attitude) of the drone as a Quaternion.
     virtual Quaternionr getOrientation() = 0;
+
+	virtual LandedState getLandedState() = 0;
 
 	/// Get the current RC inputs when RC transmitter is talking to to flight controller
     virtual RCData getRCData() = 0;

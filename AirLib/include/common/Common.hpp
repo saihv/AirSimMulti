@@ -41,6 +41,8 @@ typedef std::string string;
 typedef common_utils::Utils Utils;
 typedef VectorMath::RandomVectorGaussianT RandomVectorGaussianR;
 typedef VectorMath::RandomVectorT RandomVectorR;
+typedef uint64_t TTimePoint;
+typedef double TTimeDelta;
 
 
 //this is not required for most compilers

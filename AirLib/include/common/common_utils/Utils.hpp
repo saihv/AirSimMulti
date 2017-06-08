@@ -77,6 +77,9 @@ static int _vscprintf(const char * format, va_list pargs)
 }
 #endif
 
+template <class T> inline
+void unused(T const & result) { static_cast<void>(result); }
+
 namespace common_utils {
 
 class Utils {
@@ -459,6 +462,12 @@ public:
     }
 
     //Unix timestamp
+	static uint64_t getUnixTimeStamp(std::time_t* t = nullptr)
+	{
+		std::time_t st = std::time(t);
+		auto millies = static_cast<std::chrono::milliseconds>(st).count();
+		return static_cast<uint64_t>(millies);
+	}
     static unsigned long getTimeSinceEpochMillis(std::time_t* t = nullptr)
     {
         std::time_t st = std::time(t);
@@ -471,6 +480,11 @@ public:
         using Clock = std::chrono::high_resolution_clock;
         return std::chrono::duration<double>((t != nullptr ? *t : Clock::now() ).time_since_epoch()).count();
     }
+	static uint64_t getTimeSinceEpochNanos(std::chrono::high_resolution_clock::time_point* t = nullptr)
+	{
+		using Clock = std::chrono::high_resolution_clock;
+		return static_cast<uint64_t>((t != nullptr ? *t : Clock::now()).time_since_epoch().count());
+	}
 
     template<typename T>
     static void clear(std::queue<T> &q, size_t max_elements = SIZE_MAX)
