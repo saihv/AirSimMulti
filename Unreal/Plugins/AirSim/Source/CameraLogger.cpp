@@ -75,7 +75,7 @@ void FCameraLogger::ReadPixelsNonBlocking(TArray<FColor>& bmp, unsigned int id)
 					RenderResource,
 					&bmp,
 					FIntRect(0, 0, RenderResource->GetSizeXY().X, RenderResource->GetSizeXY().Y),
-					FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)
+					FReadSurfaceDataFlags()
 				};
 
 				// bReadPixelsStarted = true;
@@ -156,7 +156,7 @@ void FCameraLogger::SaveImage(int id)
 		if (!imageSavedOk)
 			UAirBlueprintLib::LogMessage(TEXT("FAILED to save screenshot to:"), filePath, LogDebugLevel::Failure);
 		else {
-			auto physics_body = static_cast<msr::airlib::PhysicsBody*>(GameThread->fpv_vehicle_connector_[0]->getPhysicsBody());
+			auto physics_body = static_cast<msr::airlib::PhysicsBody*>(GameThread->fpv_vehicle_connector_[id-1]->getPhysicsBody());
 			auto kinematics = physics_body->getKinematics();
 
 			GameThread->record_file << msr::airlib::Utils::getTimeSinceEpochMillis() << "\t";
