@@ -321,6 +321,9 @@
     <ClInclude Include="include\vehicles\configs\Px4HILQuadX.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\controllers\VehicleCamera.hpp">
+       <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\controllers\DroneControllerBase.cpp">

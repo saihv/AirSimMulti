@@ -15,11 +15,8 @@ public:
     virtual void Tick( float DeltaSeconds ) override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	AFlyingPawn* pawn1;
-	AFlyingPawn* pawn2;
-
-	std::shared_ptr<VehicleConnectorBase> fpv_vehicle_connector_;
-	std::shared_ptr<VehicleConnectorBase> fpv_vehicle_connector_2_;
+	std::vector <AFlyingPawn*> game_pawns;
+	std::vector <std::shared_ptr<VehicleConnectorBase>> fpv_vehicle_connector_;
 
 protected:
     virtual void createVehicles(std::vector<VehiclePtr>& vehicles) override;

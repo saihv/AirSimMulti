@@ -14,6 +14,7 @@
 #include <iostream>
 #include <fstream>
 #include "controllers/DroneControllerBase.hpp"
+#include "controllers/VehicleCamera.hpp"
 #include "common/common_utils/FileSystem.hpp"
 
 namespace msr { namespace airlib {
@@ -115,7 +116,7 @@ bool DroneControllerBase::moveOnPath(const vector<Vector3r>& path, float velocit
     else {
         //if auto mode requested for lookahead then calculate based on velocity
         lookahead = getAutoLookahead(velocity, adaptive_lookahead);
-        Utils::logMessage("lookahead = %f, adaptive_lookahead = %f", lookahead, adaptive_lookahead);        
+        Utils::logMessage("lookahead = %f, adaptive_lookahead = %f", lookahead, adaptive_lookahead);
     }
 
     //add current position as starting point
@@ -137,7 +138,7 @@ bool DroneControllerBase::moveOnPath(const vector<Vector3r>& path, float velocit
         path_segs.push_back(path_seg);
         path3d.push_back(point);
     }
-    //add last segment as zero length segment so we have equal number of segments and points. 
+    //add last segment as zero length segment so we have equal number of segments and points.
     //path_segs[i] refers to segment that starts at point i
     path_segs.push_back(PathSegment(point, point, velocity, path_length));
 
@@ -171,7 +172,7 @@ bool DroneControllerBase::moveOnPath(const vector<Vector3r>& path, float velocit
         }
 
         //send drone command to get to next lookahead
-        moveToPathPosition(next_path_loc.position, seg_velocity, drivetrain, 
+        moveToPathPosition(next_path_loc.position, seg_velocity, drivetrain,
             yaw_mode, path_segs.at(cur_path_loc.seg_index).start_z);
 
         //sleep for rest of the cycle
@@ -193,7 +194,7 @@ bool DroneControllerBase::moveOnPath(const vector<Vector3r>& path, float velocit
 
         Note that PC could be at any angle relative to PN, including 0 or -ve. We increase lookahead distance
         by the amount of |PC|. For this, we project PC on to PN to get vector PC' and length of
-        CC'is our adaptive lookahead error by which we will increase lookahead distance. 
+        CC'is our adaptive lookahead error by which we will increase lookahead distance.
 
         For next iteration, we first update our current position by goal_dist and then
         set next goal by the amount lookahead + lookahead_error.
@@ -217,7 +218,7 @@ bool DroneControllerBase::moveOnPath(const vector<Vector3r>& path, float velocit
             const Vector3r& actual_vect = getPosition() - cur_path_loc.position;
 
             //project actual vector on goal vector
-            const Vector3r& goal_normalized = goal_vect.normalized();    
+            const Vector3r& goal_normalized = goal_vect.normalized();
             goal_dist = actual_vect.dot(goal_normalized); //dist could be -ve if drone moves away from goal
 
                                                             //if adaptive lookahead is enabled the calculate lookahead error (see above fig)
@@ -347,7 +348,7 @@ bool DroneControllerBase::moveByRollPitchZ(float pitch, float roll, float z, flo
     return true;
 }
 
-bool DroneControllerBase::setSafety(SafetyEval::SafetyViolationType enable_reasons, float obs_clearance, SafetyEval::ObsAvoidanceStrategy obs_startegy, 
+bool DroneControllerBase::setSafety(SafetyEval::SafetyViolationType enable_reasons, float obs_clearance, SafetyEval::ObsAvoidanceStrategy obs_startegy,
     float obs_avoidance_vel, const Vector3r& origin, float xy_length, float max_z, float min_z)
 {
     if (safety_eval_ptr_ == nullptr)
@@ -526,7 +527,7 @@ bool DroneControllerBase::safetyCheckDestination(const Vector3r& dest_pos)
 
     const auto& result = safety_eval_ptr_->isSafeDestination(getPosition(), dest_pos, getOrientation());
     return emergencyManeuverIfUnsafe(result);
-}    
+}
 
 void DroneControllerBase::logHomePoint()
 {
@@ -618,7 +619,7 @@ void DroneControllerBase::moveToPathPosition(const Vector3r& dest, float velocit
             //generate velocity vector that is same size as cur_dest_norm / command period
             //this velocity vect when executed for command period would yield cur_dest_norm
         Utils::logMessage("Too close dest: cur_dest_norm=%f, expected_dist=%f", cur_dest_norm, expected_dist);
-        velocity_vect = (cur_dest / cur_dest_norm) * (cur_dest_norm / getCommandPeriod());   
+        velocity_vect = (cur_dest / cur_dest_norm) * (cur_dest_norm / getCommandPeriod());
     }
 
     //send commands
@@ -633,7 +634,7 @@ bool DroneControllerBase::isYawWithinMargin(float yaw_target, float margin)
 {
     const float yaw_current = VectorMath::getYaw(getOrientation()) * 180 / M_PIf;
     return std::abs(yaw_current - yaw_target) <= margin;
-}    
+}
 
 void DroneControllerBase::setImageTypeForCamera(int camera_id, ImageType type)
 {
@@ -663,38 +664,30 @@ void DroneControllerBase::setImageForCamera(int camera_id, ImageType type, const
     auto it = images.find(camera_id);
     if (it != images.end())
         (it->second)[type] = image;
-    
+
     auto new_list = EnumClassUnorderedMap<ImageType, vector<uint8_t>>();
     new_list[type] = image;
     images[camera_id] = new_list;
 }
 
-vector<uint8_t> DroneControllerBase::getImageForCamera(int camera_id, ImageType type)
+void DroneControllerBase::addCamera(std::shared_ptr<VehicleCamera> camera)
 {
     StatusLock lock(this);
+    enabled_cameras[camera->getId()] = camera;
+}
 
-    //TODO: bug: MSGPACK bombs out if vector if of 0 size
-    static vector<uint8_t> empty_vec(1);
+vector<uint8_t> DroneControllerBase::getImageForCamera(int camera_id, ImageType type)
+{
+  StatusLock lock(this);
 
-    vector<uint8_t> result;
+  vector<uint8_t> png;
 
-    //TODO: perf work
-    auto it = images.find(camera_id);
-    if (it != images.end()) {
-        auto it2 = it->second.find(type);
-        if (it2 != it->second.end())
-            result = it2->second;
-        else
-            result = empty_vec;
-
-    } else
-        result = empty_vec;
-
-    if (result.size() == 0) {
-        result = empty_vec;
-    }
-
-    return result;
+  //TODO: perf work
+  auto it = enabled_cameras.find(camera_id);
+  if (it != enabled_cameras.end()) {
+    it->second->getScreenShot(type, png);
+  }
+  return png;
 }
 
 Pose DroneControllerBase::getDebugPose()

@@ -22,11 +22,9 @@ void APIPCamera::PostInitializeComponents()
 
     camera_ = UAirBlueprintLib::GetActorComponent<UCameraComponent>(this, TEXT("CameraComponent"));
 
-    screen_capture_ = UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent"));
-    screen_capture_2_ = UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent2"));
-	
-    depth_capture_ = UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("DepthCaptureComponent"));
-    seg_capture_ = UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SegmentationCaptureComponent"));
+    scene_capture_ = UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent"));
+    depth_capture_ = UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent2"));
+    seg_capture_ = UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent3"));
 }
 
 void APIPCamera::setToMainView()
@@ -71,12 +69,12 @@ void APIPCamera::activateCaptureComponent(const EPIPCameraType type)
 {
     USceneCaptureComponent2D* capture = getCaptureComponent(type, true);
     if (capture != nullptr) {
-        capture->TextureTarget = getTexureRenderTarget(type, false);
+        capture->TextureTarget = getTextureRenderTarget(type, false);
         capture->Activate();
     }
 }
 
-UTextureRenderTarget2D* APIPCamera::getTexureRenderTarget(const EPIPCameraType type, bool if_active)
+UTextureRenderTarget2D* APIPCamera::getTextureRenderTarget(const EPIPCameraType type, bool if_active)
 {
     switch (type) {
     case EPIPCameraType::PIP_CAMERA_TYPE_SCENE:
@@ -105,11 +103,11 @@ USceneCaptureComponent2D* APIPCamera::getCaptureComponent(const EPIPCameraType t
     switch (type) {
     case EPIPCameraType::PIP_CAMERA_TYPE_SCENE:
         if (!if_active || (static_cast<uint8>(enabled_camera_types_) & static_cast<uint8>(EPIPCameraType::PIP_CAMERA_TYPE_SCENE)))
-            return screen_capture_;
+            return scene_capture_;
         return nullptr;
     case EPIPCameraType::PIP_CAMERA_TYPE_DEPTH:
         if (!if_active || (static_cast<uint8>(enabled_camera_types_) & static_cast<uint8>(EPIPCameraType::PIP_CAMERA_TYPE_DEPTH)))
-            return screen_capture_2_;
+            return depth_capture_;
         return nullptr;
     case EPIPCameraType::PIP_CAMERA_TYPE_SEG:
         if (!if_active || (static_cast<uint8>(enabled_camera_types_) & static_cast<uint8>(EPIPCameraType::PIP_CAMERA_TYPE_SEG)))
@@ -177,56 +175,4 @@ EPIPCameraType APIPCamera::getEnableCameraTypes()
 void APIPCamera::setEnableCameraTypes(EPIPCameraType types)
 {
     enabled_camera_types_ = types;
-}
-
-
-bool APIPCamera::getScreenshot(EPIPCameraType camera_type, TArray<uint8>& compressedPng, float& width, float& height)
-{
-    USceneCaptureComponent2D* capture = getCaptureComponent(camera_type, true);;
-
-    if (capture == nullptr) {
-        UAirBlueprintLib::LogMessage(TEXT("Can't take screenshot because eithercamera type is not active"), TEXT(""), LogDebugLevel::Failure);
-        return false;
-    }
-
-    if (capture->TextureTarget == nullptr) {
-        UAirBlueprintLib::LogMessage(TEXT("Can't take screenshot because texture target is null"), TEXT(""), LogDebugLevel::Failure);
-        return false;
-    }
-
-    FTextureRenderTargetResource* resource = capture->TextureTarget->GameThread_GetRenderTargetResource();
-
-    if (resource == nullptr) {
-        UAirBlueprintLib::LogMessage(TEXT("Can't take screenshot because texture target resource is not available"), TEXT(""), LogDebugLevel::Failure);
-        return false;
-    }
-
-    width = capture->TextureTarget->GetSurfaceWidth();
-    height = capture->TextureTarget->GetSurfaceHeight();
-
-    TArray<FColor> bmp;
-    bmp.AddUninitialized(width * height);
-
-    resource->ReadPixels(bmp);
-
-    FIntPoint dest(width, height);
-    FImageUtils::CompressImageArray(dest.X, dest.Y, bmp, compressedPng);
-
-    return true;
-}
-
-void APIPCamera::saveScreenshot(EPIPCameraType camera_type, FString fileSavePathPrefix, int fileSuffix)
-{
-    TArray<uint8> compressedPng;
-    float width, height;
-    if (getScreenshot(camera_type, compressedPng, width, height)) {
-        FString filePath = fileSavePathPrefix + FString::FromInt(fileSuffix) + ".png";
-        bool imageSavedOk = FFileHelper::SaveArrayToFile(compressedPng, *filePath);
-
-        if (!imageSavedOk)
-            UAirBlueprintLib::LogMessage(TEXT("File save failed to:"), filePath, LogDebugLevel::Failure);
-        else {
-            UAirBlueprintLib::LogMessage(TEXT("Screenshot saved to:"), filePath, LogDebugLevel::Success);
-        }
-    }
 }

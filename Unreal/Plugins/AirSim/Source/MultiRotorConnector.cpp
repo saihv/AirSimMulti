@@ -3,6 +3,7 @@
 #include "vehicles/configs/PX4ConfigCreator.hpp"
 #include "vehicles/configs/RosFlightQuadX.hpp"
 #include "AirBlueprintLib.h"
+#include "VehicleCameraConnector.h"
 #include <exception>
 
 using namespace msr::airlib;
@@ -44,6 +45,9 @@ void MultiRotorConnector::initialize(AFlyingPawn* vehicle_pawn, MultiRotorConnec
     default: //no additional initializations needed
         break;
     }
+	controller_ = static_cast<msr::airlib::DroneControllerBase*>(vehicle_.getController());
+
+	controller_->addCamera(std::make_shared<VehicleCameraConnector>(vehicle_pawn_->getFpvCamera(), 0));
 }
 
 MultiRotorConnector::~MultiRotorConnector()
@@ -110,9 +114,9 @@ void MultiRotorConnector::updateRendering(float dt)
 	}
 
     //update rotor animations
-    for (unsigned int i = 0; i < vehicle_.vertexCount(); ++i) {
-        vehicle_pawn_->setRotorSpeed(i, rotor_speeds_[i] * rotor_directions_[i]);
-    }
+    //for (unsigned int i = 0; i < vehicle_.vertexCount(); ++i) {
+   //     vehicle_pawn_->setRotorSpeed(i, rotor_speeds_[i] * rotor_directions_[i]);
+    //}
 
     for (auto i = 0; i < controller_messages_.size(); ++i) {
         UAirBlueprintLib::LogMessage(FString(controller_messages_[i].c_str()), TEXT(""), LogDebugLevel::Success, 30);
@@ -120,13 +124,12 @@ void MultiRotorConnector::updateRendering(float dt)
 }
 
 
-void MultiRotorConnector::startApiServer(std::string address)
+void MultiRotorConnector::startApiServer()
 {
     //TODO: remove static up cast from below?
     controller_cancelable_.reset(new msr::airlib::DroneControllerCancelable(
         vehicle_.getController()));
-    // api_server_address_ = Settings::singleton().getString("LocalHostIp", "127.0.0.1");
-	api_server_address_ = address;
+    api_server_address_ = Settings::singleton().getString("LocalHostIp", "127.0.0.1");
     rpclib_server_.reset(new msr::airlib::RpcLibServer(controller_cancelable_.get(), api_server_address_));
     rpclib_server_->start();
 

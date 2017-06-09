@@ -17,7 +17,7 @@ void AFlyingPawn::initializeForPlay()
 	setupComponentReferences();
 
 	//set stencil IDs
-	setStencilIDs();
+	// setStencilIDs();
 
 	setupInputBindings();
 

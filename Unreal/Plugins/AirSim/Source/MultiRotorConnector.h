@@ -37,7 +37,7 @@ public:
     virtual void updateRenderedState() override;
     virtual void updateRendering(float dt) override;
 
-    virtual void startApiServer(std::string address) override;
+    virtual void startApiServer() override;
     virtual void stopApiServer() override;
     virtual bool isApiServerStarted() override;
     virtual msr::airlib::VehicleControllerBase* getController() override;
@@ -55,6 +55,8 @@ private:
     msr::airlib::Environment environment_;
     AFlyingPawn* vehicle_pawn_;
     std::string api_server_address_;
+
+	msr::airlib::DroneControllerBase* controller_;
 
     std::unique_ptr<msr::airlib::MultiRotorParams> vehicle_params_;
     std::unique_ptr<msr::airlib::DroneControllerCancelable> controller_cancelable_;

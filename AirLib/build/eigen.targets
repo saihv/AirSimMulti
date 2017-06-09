@@ -6,7 +6,7 @@
 
   <PropertyGroup>
     <PrepareForBuildDependsOn>$(PrepareForBuildDependsOn);InvokeRpcLibBuild;InvokeEigenBuild</PrepareForBuildDependsOn>
-    <EIGEN_ROOT Condition="'$(EIGEN_ROOT)'==''">$(MSBuildThisFileDirectory)\..\..</EIGEN_ROOT>
+    <EIGEN_ROOT Condition="'$(EIGEN_ROOT)'==''">$(MSBuildThisFileDirectory)\..\..\eigen</EIGEN_ROOT>
   </PropertyGroup>
 
   <Target Name="InvokeRpcLibBuild"
@@ -38,6 +38,7 @@
       <Using Namespace="System.IO.Compression" />
       <Code Type="Fragment" Language="cs">
         <![CDATA[
+        Directory.CreateDirectory(TargetDirectory);
         var client = new System.Net.Http.HttpClient();
         Log.LogMessage(MessageImportance.High, "Downloading Eigen from " + EigenSourceUrl);
         var stream = client.GetStreamAsync(new System.Uri(EigenSourceUrl)).Result;

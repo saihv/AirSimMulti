@@ -1,13 +1,13 @@
 @echo off
-setlocal
+
 set ROOT_DIR=%CD%
 
-chdir /d %ROOT_DIR% 
 git submodule update --init --recursive
 
 WHERE cmake >nul 2>nul
 IF %ERRORLEVEL% NEQ 0 (
-	call :installcmake
+	echo cmake was not found! First install the latest version from https://cmake.org/.
+	goto :buildfailed
 )
 
 IF NOT EXIST external\rpclib\build mkdir external\rpclib\build
@@ -50,22 +50,3 @@ goto :eof
 chdir /d %ROOT_DIR% 
 echo #### Build failed
 goto :eof
-
-:installcmake
-if NOT EXIST cmake-3.7.2-win64-x64 call :downloadcmake
-set PATH=%PATH%;%ROOT_DIR%\cmake-3.7.2-win64-x64\bin;
-goto :eof
-
-:downloadcmake
-echo CMake was not found, so we are installing it for you... 
-%ROOT_DIR%\tools\httpget "https://cmake.org/files/v3.7/cmake-3.7.2-win64-x64.zip"
-if ERRORLEVEL 1 goto :cmakefailed
-echo Decompressing cmake-3.7.2-win64-x64.zip...
-%ROOT_DIR%\tools\unzip "cmake-3.7.2-win64-x64.zip"
-if ERRORLEVEL 1 goto :cmakefailed
-del cmake-3.7.2-win64-x64.zip
-goto :eof
-
-:cmakefailed
-echo CMake install failed, please install cmake manually from https://cmake.org/
-exit 1

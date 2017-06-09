@@ -10,11 +10,13 @@ void ASimModeWorldMultiRotor::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (fpv_vehicle_connector_ != nullptr) {
+    if (fpv_vehicle_connector_.size() != 0) {
         //create its control server
         try {
-            fpv_vehicle_connector_->startApiServer("127.0.0.1");
-			fpv_vehicle_connector_2_->startApiServer("127.0.0.2");
+			for (auto connector : fpv_vehicle_connector_)
+			{
+				connector->startApiServer();
+			}
         }
         catch (std::exception& ex) {
             UAirBlueprintLib::LogMessage("Cannot start RpcLib Server",  ex.what(), LogDebugLevel::Failure);
@@ -24,43 +26,9 @@ void ASimModeWorldMultiRotor::BeginPlay()
 
 void ASimModeWorldMultiRotor::Tick(float DeltaSeconds)
 {
-    if (fpv_vehicle_connector_ != nullptr && fpv_vehicle_connector_->isApiServerStarted() && getVehicleCount() > 0) {
-
-        using namespace msr::airlib;
-        auto controller = static_cast<DroneControllerBase*>(fpv_vehicle_connector_->getController());
-        auto camera_type = controller->getImageTypeForCamera(0);
-        if (camera_type != DroneControllerBase::ImageType::None) { 
-            if (CameraDirector != nullptr) {
-                APIPCamera* camera = CameraDirector->getCamera(0);
-                EPIPCameraType pip_type;
-                if (camera != nullptr) {
-                    //TODO: merge these two different types?
-                    switch (camera_type) {
-                    case DroneControllerBase::ImageType::Scene:
-                        pip_type = EPIPCameraType::PIP_CAMERA_TYPE_SCENE; break;
-                    case DroneControllerBase::ImageType::Depth:
-                        pip_type = EPIPCameraType::PIP_CAMERA_TYPE_DEPTH; break;
-                    case DroneControllerBase::ImageType::Segmentation:
-                        pip_type = EPIPCameraType::PIP_CAMERA_TYPE_SEG; break;
-                    default:
-                        pip_type = EPIPCameraType::PIP_CAMERA_TYPE_NONE;
-                    }
-                    float width, height;
-                    image_.Empty();
-                    camera->getScreenshot(pip_type, image_, width, height);
-                    controller->setImageForCamera(0, camera_type, std::vector<msr::airlib::uint8_t>(image_.GetData(), image_.GetData() + image_.Num()));
-                }
-            }
-        }
-
+    if (fpv_vehicle_connector_[0] != nullptr && fpv_vehicle_connector_[0]->isApiServerStarted() && getVehicleCount() > 0) {
+		
 		if (isRecording() && record_file.is_open()) {
-			//auto physics_body = static_cast<msr::airlib::PhysicsBody*>(fpv_vehicle_connector_->getPhysicsBody());
-			//auto kinematics = physics_body->getKinematics();
-
-			//record_file << msr::airlib::Utils::getTimeSinceEpochMillis() << "\t";    //TODO: maintain simulation timer instead
-			//record_file << kinematics.pose.position.x() << "\t" << kinematics.pose.position.y() << "\t" << kinematics.pose.position.z()  << "\t";
-			//record_file << kinematics.pose.orientation.w() << "\t" << kinematics.pose.orientation.x() << "\t" << kinematics.pose.orientation.y() << "\t" << kinematics.pose.orientation.z()  << "\t";
-			//record_file << "\n";
 			if (!isLoggingStarted)
 			{
 				FString imagePathPrefix = common_utils::FileSystem::getLogFileNamePath("img_", "", "", false).c_str();
@@ -81,13 +49,11 @@ void ASimModeWorldMultiRotor::Tick(float DeltaSeconds)
 
 void ASimModeWorldMultiRotor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    if (fpv_vehicle_connector_ != nullptr) {
-        fpv_vehicle_connector_->stopApiServer();
-		fpv_vehicle_connector_2_->stopApiServer();
-    }
-
+	for (auto connector : fpv_vehicle_connector_) {
+		if (connector != nullptr)
+			connector->stopApiServer();
+	}
 	FCameraLogger::Shutdown();
-
     Super::EndPlay(EndPlayReason);
 }
 
@@ -112,17 +78,26 @@ void ASimModeWorldMultiRotor::createVehicles(std::vector<VehiclePtr>& vehicles)
     UAirBlueprintLib::FindAllActor<AFlyingPawn>(this, pawns);
     for (AActor* pawn : pawns) {
         auto vehicle = createVehicle(static_cast<AFlyingPawn*>(pawn));
+
         if (vehicle != nullptr) {
             vehicles.push_back(vehicle);
-
-            if (pawn == fpv_pawn) {
-                fpv_vehicle_connector_ = vehicle;
-				pawn1 = static_cast<AFlyingPawn*>(pawn);
-            }
-			else if(pawn2 == NULL)
+			
+			if ((*((AFlyingPawn*)(pawn))).VehicleName.Equals(TEXT("Quad1"), ESearchCase::CaseSensitive))
 			{
-				fpv_vehicle_connector_2_ = vehicle;
-				pawn2 = static_cast<AFlyingPawn*>(pawn);
+				fpv_vehicle_connector_.push_back(vehicle);
+				game_pawns.push_back(static_cast<AFlyingPawn*>(pawn));
+			}
+			 
+			else if ((*((AFlyingPawn*)(pawn))).VehicleName.Equals(TEXT("Quad2"), ESearchCase::CaseSensitive))
+			{
+				fpv_vehicle_connector_.push_back(vehicle);
+				game_pawns.push_back(static_cast<AFlyingPawn*>(pawn));
+			}
+
+			else if ((*((AFlyingPawn*)(pawn))).VehicleName.Equals(TEXT("Quad3"), ESearchCase::CaseSensitive))
+			{
+				fpv_vehicle_connector_.push_back(vehicle);
+				game_pawns.push_back(static_cast<AFlyingPawn*>(pawn));
 			}
         }
         //else we don't have vehicle for this pawn
