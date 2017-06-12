@@ -37,7 +37,7 @@ public:
     virtual void updateRenderedState() override;
     virtual void updateRendering(float dt) override;
 
-    virtual void startApiServer() override;
+    virtual void startApiServer(int id) override;
     virtual void stopApiServer() override;
     virtual bool isApiServerStarted() override;
     virtual msr::airlib::VehicleControllerBase* getController() override;
