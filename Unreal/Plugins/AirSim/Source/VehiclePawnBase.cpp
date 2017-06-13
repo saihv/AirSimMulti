@@ -51,7 +51,7 @@ void AVehiclePawnBase::initialize()
 
     initial_state_.tracing_enabled = EnableTrace;
     initial_state_.collisons_enabled = false;
-    initial_state_.passthrough_enabled = EnablePassthroughOnCollisons;
+    initial_state_.passthrough_enabled = false;
 
 
     initial_state_.collison_info = CollisionInfo();
