@@ -13,10 +13,11 @@ void ASimModeWorldMultiRotor::BeginPlay()
     if (fpv_vehicle_connector_.size() != 0) {
         //create its control server
         try {
-			//int quadCounter = 0;
+			int quadCounter = 0;
 			for (auto connector : fpv_vehicle_connector_)
 			{
-				connector->startApiServer(0);
+				connector->startApiServer(quadCounter);
+				quadCounter++;
 			}
         }
         catch (std::exception& ex) {
