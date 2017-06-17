@@ -1103,7 +1103,7 @@ public:
 }} //namespace
 
 
-std::string server_address("127.0.0.2");
+std::string server_address("127.0.0.3");
 
 bool parseCommandLine(int argc, const char* argv[])
 {
