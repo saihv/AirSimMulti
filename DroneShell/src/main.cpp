@@ -1127,7 +1127,7 @@ bool parseCommandLine(int argc, const char* argv[])
 
 void printUsage() {
     std::cout << "Usage: DroneServer [-server 127.0.0.1]" << std::endl;
-    std::cout << "The default server address is 127.0.0.1, but use the -server option to specify a different address for the server" << std::endl;
+    std::cout << "The default server address is 127.0.0.1, but use the -server option to specify a different address for the server. The address here needs to match the address of the quadrotor that needs to be controlled." << std::endl;
 }
 
 int main(int argc, const char *argv[]) {
