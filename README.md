@@ -1,3 +1,19 @@
+# AirSimMulti
+
+AirSimMulti is a fork of Microsoft AirSim with the main aim of simulating multiple drones. It is a work in progress, and uses an older version of Microsoft AirSim as its base. Basic features such as simulating multiple vehicles, independent control and image recording from different vehicles are working. 
+
+In order to try it out for yourself, please clone the repository, and use it within Unreal Engine similar to the default version of AirSim. Three changes that would have to be made are:
+
+1. Within Unreal Engine, splitscreen would have to be disabled. This can be done by navigating to Unreal->Project Settings->Maps and Modes and by unchecking splitscreen.
+
+2. Depending on the number of drones being simulated, additional PlayerStarts would have to be added to specify the accurate spawn locations for each drone. Each of these PlayerStart icons contains a tag in "PlayerStart->Details", which needs to be named as One, Two, Three and so on.
+
+3. For HIL to work, within the settings.json file, the right COMports need to be specified based on where the PIXHAWK modules are enumerated. This code has not been tested with SITL yet.
+
+Each drone that is simulated within Unreal uses its own IP address (127.0.0.1, 0.2, 0.3...) in order to facilitate offboard control from external modules such as DroneShell and PythonClient. The branches 2uav and 3uav simulate 2 and 3 drones respectively, whereas 'swarm' simulates 5 UAVs and also acts as a base for extending the functionality to more drones.
+
+Documentation about how to extend AirSimMulti to a custom number of vehicles is coming soon.
+
 # Welcome to AirSim
 
 AirSim is a simulator for drones (and soon other vehicles) built on Unreal Engine. It is open-source, cross platform and supports hardware-in-loop 
