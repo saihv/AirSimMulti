@@ -5,7 +5,7 @@ AirSimMulti is a fork of Microsoft AirSim with the main aim of simulating multip
 In order to try it out for yourself, please clone the repository, and use it within Unreal Engine similar to the default version of AirSim. Three changes that would have to be made are:
 
 1. Within Unreal Engine, splitscreen would have to be disabled. This can be done by navigating to Unreal->Project Settings->Maps and Modes and by unchecking splitscreen.
-2. Depending on the number of drones being simulated, additional PlayerStarts would have to be added to specify the accurate spawn locations for each drone. Each of these PlayerStart icons contains a tag in "PlayerStart->Details", which needs to be named as One, Two, Three and so on.
+2. Depending on the number of drones being simulated, additional PlayerStarts would have to be added to specify the accurate spawn locations for each drone. Each of these PlayerStart icons contains a tag in "PlayerStart->Details", which needs to be named as One, Two, Three and so on. Below is a screenshot for two drones and two corresponding player starts.
 
 ![Tagging a player start](docs/images/PlayerStart_tagging.PNG)
 
