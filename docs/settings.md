@@ -5,26 +5,71 @@ Here's a [sample json file](https://en.wikipedia.org/wiki/JSON) file:
 
 ```
 {
-  "AirControlCompID": 1,
-  "AirControlSysID": 134,
-  "ExtRendererCompID": 1,
-  "ExtRendererSysID": 167,
-  "ExternalSimPort": 14588,
-  "LocalHostIp": "127.0.0.1",
-  "LogViewerHostIp": "127.0.0.1",
-  "LogViewerPort": 14388,
-  "Pixhawk": {
+  "Quad1": {
+    "LocalHostIp": "127.0.0.1",
+    "LogViewerHostIp": "127.0.0.1",
+    "LogViewerPort": 14388,
+    "Model": "Generic",
+    "OffboardCompID": 1,
+    "OffboardSysID": 134,
+    "QgcHostIp": "127.0.0.1",
+    "QgcPort": 14550,
     "SerialBaudRate": 115200,
-    "SerialPort": "*",
+    "SerialPort": "COM5",
+    "SimCompID": 42,
+    "SimSysID": 142,
+    "SitlIp": "127.0.0.1",
+    "SitlPort": 14556,
     "UdpIp": "127.0.0.1",
     "UdpPort": 14560,
-    "UseSerial": true
+    "UseSerial": true,
+    "VehicleCompID": 1,
+    "VehicleSysID": 135
   },
-  "QgcHostIp": "127.0.0.1",
-  "QgcPort": 14550,
-  "SimCompID": 42,
-  "SimSysID": 142
+  "Quad2": {
+    "LocalHostIp": "127.0.0.2",
+    "LogViewerHostIp": "127.0.0.2",
+    "LogViewerPort": 14388,
+    "Model": "Generic",
+    "OffboardCompID": 1,
+    "OffboardSysID": 135,
+    "QgcHostIp": "127.0.0.1",
+    "QgcPort": 14550,
+    "SerialBaudRate": 115200,
+    "SerialPort": "COM6",
+    "SimCompID": 42,
+    "SimSysID": 143,
+    "SitlIp": "127.0.0.2",
+    "SitlPort": 14556,
+    "UdpIp": "127.0.0.2",
+    "UdpPort": 14560,
+    "UseSerial": true,
+    "VehicleCompID": 1,
+    "VehicleSysID": 136
+  },
+  "Quad3": {
+    "LocalHostIp": "127.0.0.3",
+    "LogViewerHostIp": "127.0.0.3",
+    "LogViewerPort": 14388,
+    "Model": "Generic",
+    "OffboardCompID": 1,
+    "OffboardSysID": 136,
+    "QgcHostIp": "127.0.0.1",
+    "QgcPort": 14550,
+    "SerialBaudRate": 115200,
+    "SerialPort": "COM7",
+    "SimCompID": 42,
+    "SimSysID": 144,
+    "SitlIp": "127.0.0.3",
+    "SitlPort": 14556,
+    "UdpIp": "127.0.0.3",
+    "UdpPort": 14560,
+    "UseSerial": true,
+    "VehicleCompID": 1,
+    "VehicleSysID": 137
+  }
 }
+
 
 ```
 
@@ -36,11 +81,11 @@ that on a different machine (QgcHostIp,QgcPort).
 
 You can connect the simulator to the LogViewer app, provided in this repo, by setting the UDP address for that (LogViewerHostIp,LogViewerPort).
 
-And for each flying drone added to the simulator there is a named block of additional settings.  In the above you see the default name "Pixhawk".  
-You can change this name from the Unreal Editor when you add a new BP_FlyingPawn asset.  You will see these properties grouped under the category
+And for each flying drone added to the simulator there is a named block of additional settings.  In the above you see the default names "Quad1", "Quad2" etc. 
+You can change this name from the Unreal Editor when you add a new BP_FlyingPawn asset. The assets currently present use these names "Quadx".  You will see these properties grouped under the category
 "MavLink". The mavlink node for this pawn can be remote over UDP or it can be connected
 to a local serial port.  If serial then set UseSerial to true, otherwise set UseSerial to false and set the appropriate bard rate.  The default
-of 115200 works with Pixhawk version 2 over USB.
+of 115200 works with Pixhawk version 2 over USB. COM ports need to be changed based on the connection to the computer (can be monitored through device manager if on Windows).
 
 ### LocalHostIp
 
