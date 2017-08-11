@@ -25,8 +25,7 @@ NOTE: The recommended version of PX4 firmware for use with AirSimMulti is 1.6.3.
 
 AirSimMulti was used for a computer vision based localization algorithm in this video, where three drones were simulated within a custom Unreal Engine environment. 
 
-![AirSim Demo Video](https://www.youtube.com/watch?v=feL5Exfm3xQ)
-
+[![AirSimMulti demo video](https://img.youtube.com/vi/feL5Exfm3xQ/0.jpg)](https://www.youtube.com/watch?v=feL5Exfm3xQ)
 
 # Development Status
 
