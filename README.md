@@ -1,22 +1,3 @@
-# AirSimMulti
-
-AirSimMulti is a fork of Microsoft AirSim with the main aim of simulating multiple drones. It is a work in progress, and uses an older version of Microsoft AirSim as its base. Basic features such as simulating multiple vehicles, independent (RC or offboard) control and image recording from different vehicles are working. 
-
-In order to try it out for yourself, please clone the repository, and use it within Unreal Engine similar to the default version of AirSim. Three changes that would have to be made are:
-
-1. Within Unreal Engine, splitscreen would have to be disabled. This can be done by navigating to Unreal->Project Settings->Maps and Modes and by unchecking splitscreen.
-2. Depending on the number of drones being simulated, additional PlayerStarts would have to be added to specify the accurate spawn locations for each drone. Each of these PlayerStart icons contains a tag in "PlayerStart->Details", which needs to be named as One, Two, Three and so on. Below is a screenshot for two drones and two corresponding player starts.
-
-![Tagging a player start](docs/images/PlayerStart_tagging.PNG)
-
-3. For HIL to work, within the settings.json file, the right COMports need to be specified based on where the PIXHAWK modules are enumerated. This code has not been tested with SITL yet.
-
-Each drone that is simulated within Unreal uses its own IP address (127.0.0.1, 0.2, 0.3...) in order to facilitate offboard control from external modules such as DroneShell and PythonClient. The branches 2uav and 3uav simulate 2 and 3 drones respectively, whereas 'swarm' simulates 5 UAVs and also acts as a base for extending the functionality to more drones.
-
-Documentation about how to extend AirSimMulti to a custom number of vehicles is coming soon.
-
-NOTE: The recommended version of PX4 firmware for use with AirSimMulti is 1.6.3. The firmware can be found at [this official link](https://github.com/PX4/Firmware/releases/tag/v1.6.3).
-
 # Welcome to AirSim
 
 AirSim is a simulator for drones (and soon other vehicles) built on Unreal Engine. It is open-source, cross platform and supports hardware-in-loop 
@@ -26,9 +7,26 @@ simply be dropped in to any Unreal environment you want.
 Our goal is to develop AirSim as a platform for AI research to experiment with deep learning, computer vision and reinforcement learning algorithms 
 for autonomous vehicles. For this purpose, AirSim also exposes APIs to retrieve data and control vehicles in a platform independent way.
 
-**Check out the quick 1.5 minute demo**
+# AirSimMulti
 
-[![AirSim Demo Video](docs/images/demo_video.png)](https://youtu.be/-WfTr1-OBGQ)
+AirSimMulti is a fork of Microsoft AirSim with the main aim of simulating multiple drones. It is a work in progress, and uses an older version of 
+Microsoft AirSim as its base. Basic features such as simulating multiple vehicles, independent (RC or offboard) control and image recording from 
+different vehicles are working. 
+
+In order to try it out for yourself, please clone the repository, and use it within Unreal Engine similar to the default version of AirSim, except 
+for a few minor changes, which are listed in [this document](docs/AirSimMulti.md). The branches 2uav and 3uav simulate 2 and 3 drones respectively, 
+whereas 'swarm' simulates 5 UAVs and also acts as a base for extending the functionality to more drones.
+
+Documentation about how to extend AirSimMulti to a custom number of vehicles is coming soon.
+
+NOTE: The recommended version of PX4 firmware for use with AirSimMulti is 1.6.3. The firmware can be found at [this official link](https://github.com/PX4/Firmware/releases/tag/v1.6.3).
+
+**Demo of the multi-vehicle AirSim version**
+
+AirSimMulti was used for a computer vision based localization algorithm in this video, where three drones were simulated within a custom Unreal Engine environment. 
+
+![AirSim Demo Video](https://www.youtube.com/watch?v=feL5Exfm3xQ)
+
 
 # Development Status
 
