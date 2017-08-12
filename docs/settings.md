@@ -83,7 +83,7 @@ You can connect the simulator to the LogViewer app, provided in this repo, by se
 
 And for each flying drone added to the simulator there is a named block of additional settings.  In the above you see the default names "Quad1", "Quad2" etc. 
 You can change this name from the Unreal Editor when you add a new BP_FlyingPawn asset. The assets currently present use these names "Quadx".  You will see these properties grouped under the category
-"MavLink". The mavlink node for this pawn can be remote over UDP or it can be connected
+"HIL" with the property name "Vehicle Name". The mavlink node for this pawn can be remote over UDP or it can be connected
 to a local serial port.  If serial then set UseSerial to true, otherwise set UseSerial to false and set the appropriate bard rate.  The default
 of 115200 works with Pixhawk version 2 over USB. COM ports need to be changed based on the connection to the computer (can be monitored through device manager if on Windows).
 
