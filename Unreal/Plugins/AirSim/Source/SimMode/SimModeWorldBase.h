@@ -11,8 +11,6 @@
 #include "SimModeBase.h"
 #include "SimModeWorldBase.generated.h"
 
-
-
 UCLASS()
 class AIRSIM_API ASimModeWorldBase : public ASimModeBase
 {

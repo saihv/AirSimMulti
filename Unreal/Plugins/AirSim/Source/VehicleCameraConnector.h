@@ -13,6 +13,7 @@ public:
 
     VehicleCameraConnector(APIPCamera* camera);
     virtual ImageResponse getImage(ImageType image_type, bool pixels_as_float, bool compress) override;
+	virtual USceneCaptureComponent2D* getCaptureComponent(ImageType image_type) override;
 
 private:
     msr::airlib::VehicleCameraBase::ImageResponse getSceneCaptureImage(ImageType image_type, 

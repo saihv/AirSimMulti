@@ -7,13 +7,21 @@
 #include "Recording/RecordingFile.h"
 #include "physics/PhysicsBody.hpp"
 #include "common/ClockFactory.hpp"
+#include "SimMode/SimModeWorldMultiRotor.h"
 
 class FRecordingThread : public FRunnable
 {
+	ASimModeWorldMultiRotor* GameThread;
+
+	TArray<FColor> imageColor;
+	float width = 1280;
+	float height = 720;
+	FRenderCommandFence ReadPixelFence;
+	
 public:
-    FRecordingThread();
+    FRecordingThread(ASimModeWorldMultiRotor* GameThread);
     virtual ~FRecordingThread();
-    static FRecordingThread* ThreadInit(msr::airlib::VehicleCameraBase* camera, RecordingFile* recording_file, const msr::airlib::PhysicsBody* fpv_physics_body, const RecordingSettings& settings);
+    static FRecordingThread* ThreadInit(ASimModeWorldMultiRotor* GameThread, msr::airlib::VehicleCameraBase* camera, RecordingFile* recording_file, const msr::airlib::PhysicsBody* fpv_physics_body, const RecordingSettings& settings);
     static void Shutdown();
 
 private:
@@ -24,8 +32,10 @@ private:
     void EnsureCompletion();
 
 private:
-    FThreadSafeCounter stop_task_counter_;
+
+	void ReadPixelsNonBlocking(TArray<FColor>& bmp);
     FRenderCommandFence read_pixel_fence_;
+	FThreadSafeCounter stop_task_counter_;
 
     msr::airlib::VehicleCameraBase* camera_;
     RecordingFile* recording_file_;
@@ -37,9 +47,10 @@ private:
     FRunnableThread* thread_;
 
     RecordingSettings settings_;
-
+	void saveImage();
     msr::airlib::TTimePoint last_screenshot_on_;
     msr::airlib::Pose last_pose_;
-
+	FGraphEventRef RenderStatus;
+	FGraphEventRef CompletionStatus;
     bool is_ready_;
 };

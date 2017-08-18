@@ -31,7 +31,6 @@ void APIPCamera::BeginPlay()
     
     scene_render_target_ = NewObject<UTextureRenderTarget2D>();
     setCaptureSettings(ImageType_::Scene, scene_capture_settings_);
-    //scene_render_target_->bHDR = false;
 
     depth_render_target_ = NewObject<UTextureRenderTarget2D>();
     setCaptureSettings(ImageType_::Depth, depth_capture_settings_);
@@ -121,6 +120,7 @@ void APIPCamera::updateCaptureComponentSettings(USceneCaptureComponent2D* captur
     if (render_target) {
         render_target->InitAutoFormat(settings.width, settings.height); //256 X 144, X 480
         render_target->TargetGamma = settings.target_gamma;
+		render_target->bHDR_DEPRECATED = false;
     }
     //else we will set this after this components get created
 
@@ -130,7 +130,7 @@ void APIPCamera::updateCaptureComponentSettings(USceneCaptureComponent2D* captur
         if (!std::isnan(settings.motion_blur_amount))
             capture->PostProcessSettings.MotionBlurAmount = settings.motion_blur_amount;
 
-        capture->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Histogram;        
+		capture->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Basic;
         if (!std::isnan(settings.auto_exposure_speed))
             capture->PostProcessSettings.AutoExposureSpeedDown = capture->PostProcessSettings.AutoExposureSpeedUp = settings.auto_exposure_speed;
         if (!std::isnan(settings.auto_exposure_max_brightness))

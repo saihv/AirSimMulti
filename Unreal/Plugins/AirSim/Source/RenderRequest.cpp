@@ -63,8 +63,16 @@ void RenderRequest::getScreenshot(UTextureRenderTarget2D* renderTarget, TArray<u
 
     if (!pixels_as_float) {
         if (data->width != 0 && data->height != 0) {
-            if (data->compress)
-                FImageUtils::CompressImageArray(data->width, data->height, data->bmp, image_data);
+			if (data->compress) {
+				FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([this, &image_data]()
+				{
+					FImageUtils::CompressImageArray(data->width, data->height, data->bmp, image_data);
+				}, TStatId(), NULL, ENamedThreads::GameThread);
+
+				// If you want to wait for the code above to complete do this:
+				FTaskGraphInterface::Get().WaitUntilTaskCompletes(Task);
+			}
+                
             else {
                 for (const auto& item : data->bmp) {
                     image_data.Add(item.R);
@@ -103,6 +111,42 @@ void RenderRequest::ExecuteTask()
         FRHICommandListImmediate& RHICmdList = GetImmediateCommandList_ForRenderCommand();
         auto rt_resource = data->render_target->GetRenderTargetResource();
         if (rt_resource != nullptr) {
+			const FTexture2DRHIRef& rhi_texture = rt_resource->GetRenderTargetTexture();
+
+			auto width = data->render_target->GetSurfaceWidth();
+			auto height = data->render_target->GetSurfaceHeight();
+			// Read the render target surface data back.	
+			struct FReadSurfaceContext
+			{
+				FRenderTarget* SrcRenderTarget;
+				TArray<FColor>* OutData;
+				FIntRect Rect;
+				FReadSurfaceDataFlags Flags;
+			};
+
+			data->bmp.Reset();
+			FReadSurfaceContext ReadSurfaceContext =
+			{
+				rt_resource,
+				&data->bmp,
+				FIntRect(0, 0, rt_resource->GetSizeXY().X, rt_resource->GetSizeXY().Y),
+				FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)
+			};
+
+			// bReadPixelsStarted = true;
+
+			ENQUEUE_UNIQUE_RENDER_COMMAND_ONEPARAMETER(
+				ReadSurfaceCommand,
+				FReadSurfaceContext, Context, ReadSurfaceContext,
+				{
+					RHICmdList.ReadSurfaceData(
+						Context.SrcRenderTarget->GetRenderTargetTexture(),
+						Context.Rect,
+						*Context.OutData,
+						Context.Flags
+					);
+				});
+			/*
             const FTexture2DRHIRef& rhi_texture = rt_resource->GetRenderTargetTexture();
             FIntPoint size;
             auto flags = setupRenderResource(rt_resource, data.get(), size);
@@ -125,6 +169,7 @@ void RenderRequest::ExecuteTask()
                     CubeFace_PosX, 0, 0
                 );
             }
+			*/
         }
 
         data->signal.signal();
