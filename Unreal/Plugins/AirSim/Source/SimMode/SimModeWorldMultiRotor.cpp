@@ -170,11 +170,12 @@ void ASimModeWorldMultiRotor::EndPlay(const EEndPlayReason::Type EndPlayReason)
     }
 
     spawned_actors_.Empty();
+    /*
     fpv_vehicle_connector_.Empty();
     fpv_vehicle_pawn_.Empty();
     vehicle_params_.Empty();
     current_camera_director = 0;
-
+    */
     Super::EndPlay(EndPlayReason);
 }
 
