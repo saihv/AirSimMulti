@@ -19,7 +19,7 @@ public:
         // ShowFlag.VisualizeHDR 1.
         //to replicate camera settings to SceneCapture2D, except motion blur
         typedef msr::airlib::Utils Utils;
-        static constexpr float kSceneTargetGamma = 1.05; //1.0f;
+        static constexpr float kSceneTargetGamma = Utils::nan<float>(); //1.0f;
 
         unsigned int width = 256, height = 144; //960 X 540
         float fov_degrees = Utils::nan<float>(); //90.0f

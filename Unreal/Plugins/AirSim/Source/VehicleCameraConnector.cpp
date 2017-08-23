@@ -16,26 +16,18 @@ msr::airlib::VehicleCameraBase::ImageResponse VehicleCameraConnector::getImage(V
 {
 
     if (camera_== nullptr) {
-		msr::airlib::VehicleCameraBase::ImageResponse response;
+        ImageResponse response;
         response.message = "camera is not set";
         return response;
     }
     if (image_type == ImageType_::None) {
-		msr::airlib::VehicleCameraBase::ImageResponse response;
+        ImageResponse response;
         response.message = "ImageType was None";
         return response;
     }
 
     return getSceneCaptureImage(image_type, pixels_as_float, compress, false);
 }
-
-USceneCaptureComponent2D* VehicleCameraConnector::getCaptureComponent(VehicleCameraConnector::ImageType image_type)
-{
-	using namespace msr::airlib;
-	USceneCaptureComponent2D* capture = camera_->getCaptureComponent(image_type, false);
-	return capture;
-}
-
 
 msr::airlib::VehicleCameraBase::ImageResponse VehicleCameraConnector::getSceneCaptureImage(VehicleCameraConnector::ImageType image_type, 
     bool pixels_as_float, bool compress, bool use_safe_method)
@@ -59,13 +51,13 @@ msr::airlib::VehicleCameraBase::ImageResponse VehicleCameraConnector::getSceneCa
     using namespace msr::airlib;
     USceneCaptureComponent2D* capture = camera_->getCaptureComponent(image_type, false);
     if (capture == nullptr) {
-		VehicleCameraBase::ImageResponse response;
+        ImageResponse response;
         response.message = "Can't take screenshot because none camera type is not active";
         return response;
     }
 
     if (capture->TextureTarget == nullptr) {
-		VehicleCameraBase::ImageResponse response;
+        ImageResponse response;
         response.message = "Can't take screenshot because texture target is null";
         return response;
     }
@@ -77,7 +69,7 @@ msr::airlib::VehicleCameraBase::ImageResponse VehicleCameraConnector::getSceneCa
     TArray<uint8> image;
     request.getScreenshot(textureTarget, image, pixels_as_float, compress, width, height);
 
-	VehicleCameraBase::ImageResponse response;
+    ImageResponse response;
     response.time_stamp = msr::airlib::ClockFactory::get()->nowNanos();
     response.image_data = std::vector<uint8_t>(image.GetData(), image.GetData() + image.Num());
     response.camera_position = NedTransform::toNedMeters(capture->GetComponentLocation());

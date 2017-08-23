@@ -47,11 +47,8 @@ void ASimHUD::BeginPlay()
     //subwindow_cameras_[0] = subwindow_cameras_[1] = subwindow_cameras_[2] = simmode_->getFpvVehiclePawn()->getCamera();
     subwindow_camera_types_[0] = ImageType_::Scene;
     subwindow_camera_types_[1] = ImageType_::Scene;
-    subwindow_camera_types_[2] = ImageType_::Depth;
+    subwindow_camera_types_[2] = ImageType_::Scene;
 
-    /*subwindow_camera_types_[0] = ImageType_::Depth;
-    subwindow_camera_types_[1] = ImageType_::Segmentation;
-    subwindow_camera_types_[2] = ImageType_::Scene;*/
     subwindow_visible_[0] = subwindow_visible_[1] = subwindow_visible_[2] = true;
 
     setupInputBindings();

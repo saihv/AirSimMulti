@@ -11,6 +11,8 @@
 //#include <windows.h>
 //#endif
 
+// static IImageWrapperModule& ImageWrapperModule = FModuleManager::GetModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
+
 class AUnrealLog : public msr::airlib::Utils::Logger
 {
 public:

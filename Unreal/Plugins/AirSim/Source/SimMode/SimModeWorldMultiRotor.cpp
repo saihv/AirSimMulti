@@ -25,9 +25,9 @@ void ASimModeWorldMultiRotor::BeginPlay()
     Super::BeginPlay();
     setupInputBindings();
     if (fpv_vehicle_connector_.Num() > 0){
-        for (std::shared_ptr<VehicleConnectorBase> vehicle_connector : fpv_vehicle_connector_){
+        for (std::shared_ptr<VehicleConnectorBase> vehicule_connector : fpv_vehicle_connector_){
             try{
-                vehicle_connector->startApiServer();
+                vehicule_connector->startApiServer();
             } catch(std::exception& ex){
                 UAirBlueprintLib::LogMessageString("Cannot start RpcLib Server",  ex.what(), LogDebugLevel::Failure);
             }
@@ -64,17 +64,17 @@ void ASimModeWorldMultiRotor::setupVehiclesAndCamera()
         external_camera = this->GetWorld()->SpawnActor<APIPCamera>(external_camera_class_, camera_transform, camera_spawn_params);
         spawned_actors_.Add(external_camera);
 
-        //create one pawn vehicle
+        //create one pawn vehicule
         FActorSpawnParameters pawn_spawn_params;
         pawn_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-        AVehiclePawnBase* vehicle_pawn = this->GetWorld()->SpawnActor<AVehiclePawnBase>(vehicle_pawn_class_, actor_transform, pawn_spawn_params);
-        fpv_vehicle_pawn_.Add(vehicle_pawn);
+        AVehiclePawnBase* vehicule_pawn = this->GetWorld()->SpawnActor<AVehiclePawnBase>(vehicle_pawn_class_, actor_transform, pawn_spawn_params);
+        fpv_vehicle_pawn_.Add(vehicule_pawn);
 
         if(enable_collision_passthrough)
-            vehicle_pawn->EnablePassthroughOnCollisons = true;
-        vehicle_pawn->initializeForBeginPlay();
-        CameraDirector->initializeForBeginPlay(getInitialViewMode() , vehicle_pawn , external_camera);
+            vehicule_pawn->EnablePassthroughOnCollisons = true;
+        vehicule_pawn->initializeForBeginPlay();
+        CameraDirector->initializeForBeginPlay(getInitialViewMode() , vehicule_pawn , external_camera);
     }else {
         for (AActor* actor : pawns ){
             FTransform actor_transform = actor->GetActorTransform();
@@ -95,17 +95,17 @@ void ASimModeWorldMultiRotor::setupVehiclesAndCamera()
             external_camera = this->GetWorld()->SpawnActor<APIPCamera>(external_camera_class_, camera_transform, camera_spawn_params);
             spawned_actors_.Add(external_camera);
 
-            //create one pawn vehicle
+            //create one pawn vehicule
             FActorSpawnParameters pawn_spawn_params;
             pawn_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-            AVehiclePawnBase* vehicle_pawn = static_cast< AVehiclePawnBase* >(actor);
-            fpv_vehicle_pawn_.Add(vehicle_pawn);
+            AVehiclePawnBase* vehicule_pawn = static_cast< AVehiclePawnBase* >(actor);
+            fpv_vehicle_pawn_.Add(vehicule_pawn);
 
             if(enable_collision_passthrough)
-                vehicle_pawn->EnablePassthroughOnCollisons = true;
-            vehicle_pawn->initializeForBeginPlay();
-            //camDirector->initializeForBeginPlay(getInitialViewMode() , vehicle_pawn , external_camera);
+                vehicule_pawn->EnablePassthroughOnCollisons = true;
+            vehicule_pawn->initializeForBeginPlay();
+            //camDirector->initializeForBeginPlay(getInitialViewMode() , vehicule_pawn , external_camera);
         }
         FTransform actor_transform = fpv_vehicle_pawn_[current_camera_director]->GetActorTransform();
         FTransform camera_transform(actor_transform.GetLocation() + FVector(-300, 0, 200));
@@ -124,7 +124,7 @@ void ASimModeWorldMultiRotor::Tick(float DeltaSeconds)
         if (isRecording() && getRecordingFile().isRecording()) {
             if (!isLoggingStarted)
             {
-                FRecordingThread::ThreadInit(this, fpv_vehicle_connector_[current_camera_director]->getCamera(), & getRecordingFile(), 
+                FRecordingThread::ThreadInit(fpv_vehicle_connector_[current_camera_director]->getCamera(), & getRecordingFile(), 
                     static_cast<msr::airlib::PhysicsBody*>(fpv_vehicle_connector_[current_camera_director]->getPhysicsBody()), recording_settings);
                 isLoggingStarted = true;
             }
@@ -142,8 +142,8 @@ void ASimModeWorldMultiRotor::Tick(float DeltaSeconds)
 
 void ASimModeWorldMultiRotor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    for (std::shared_ptr<VehicleConnectorBase> vehicle_connector : fpv_vehicle_connector_){
-        vehicle_connector->stopApiServer();
+    for (std::shared_ptr<VehicleConnectorBase> vehicule_connector : fpv_vehicle_connector_){
+        vehicule_connector->stopApiServer();
     }
 
     if (isLoggingStarted)
@@ -156,8 +156,8 @@ void ASimModeWorldMultiRotor::EndPlay(const EEndPlayReason::Type EndPlayReason)
         actor->Destroy();
     }
 
-    for (AVehiclePawnBase* vehicle_pawn : fpv_vehicle_pawn_){
-        vehicle_pawn->Destroy();
+    for (AVehiclePawnBase* vehicule_pawn : fpv_vehicle_pawn_){
+        vehicule_pawn->Destroy();
     }
 
     for (int i = 0 ; i < fpv_vehicle_connector_.Num() ; i++){
@@ -170,7 +170,7 @@ void ASimModeWorldMultiRotor::EndPlay(const EEndPlayReason::Type EndPlayReason)
     }
 
     spawned_actors_.Empty();
-   // fpv_vehicle_connector_.Empty();
+    //fpv_vehicle_connector_.Empty();
     //fpv_vehicle_pawn_.Empty();
     //vehicle_params_.Empty();
     //current_camera_director = 0;
