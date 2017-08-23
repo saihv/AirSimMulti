@@ -4,17 +4,18 @@
 #ifndef msr_airlib_vehicles_RosFlightQuadX_hpp
 #define msr_airlib_vehicles_RosFlightQuadX_hpp
 
+#include "firmwares/ros_flight/RosFlightDroneController.hpp"
 #include "vehicles/MultiRotorParams.hpp"
-#include "controllers/rosflight/RosFlightDroneController.hpp"
+#include "controllers/Settings.hpp"
 
 
 namespace msr { namespace airlib {
 
 class RosFlightQuadX : public MultiRotorParams {
 public:
-    void initializePhysics(const Environment* environment, const Kinematics::State* kinematics)
+    RosFlightQuadX(Settings& settings)
     {
-        static_cast<RosFlightDroneController*>(getController())->initializePhysics(environment_, kinematics_);
+        unused(settings);
     }
 
 protected:
@@ -27,11 +28,11 @@ protected:
 
         //set up mass
         params.mass = 2.856f;
-        real_T motor_assembly_weight = 0.0800f;  //weight for MT2212 motor for F450 frame
-        real_T box_mass = params.mass - params.rotor_count * motor_assembly_weight;
+        //real_T motor_assembly_weight = 0.0800f;  //weight for MT2212 motor for F450 frame
+        //real_T box_mass = params.mass - params.rotor_count * motor_assembly_weight;
 
         //set up dimensions of core body box
-        params.body_box.x = 0.35f; params.body_box.y = 0.20f; params.body_box.z = 0.22f;
+        params.body_box.x() = 0.35f; params.body_box.y() = 0.20f; params.body_box.z() = 0.22f;
 
         //TODO: support ground effects https://github.com/byu-magicc/fcu_sim/blob/RC1.0/fcu_sim/agents/mikey/mikey.yaml
 
@@ -44,7 +45,7 @@ protected:
         //setup rotor poses
         params.rotor_poses.clear();
         params.rotor_poses.emplace_back(Vector3r(0.230f, 0.1926f,  -0.0762f), Vector3r(0.0223925f, -0.02674078f,  -0.99939157f), RotorTurningDirection::RotorTurningDirectionCCW);
-        params.rotor_poses.emplace_back(Vector3r(-0.205, -0.1907f, -0.0762f), Vector3r(-0.02375588f, 0.02553726f, -0.99939157f), RotorTurningDirection::RotorTurningDirectionCCW);
+        params.rotor_poses.emplace_back(Vector3r(-0.205f, -0.1907f, -0.0762f), Vector3r(-0.02375588f, 0.02553726f, -0.99939157f), RotorTurningDirection::RotorTurningDirectionCCW);
         params.rotor_poses.emplace_back(Vector3r(0.205f, -0.1907f, -0.0762f), Vector3r(0.02375588f, 0.02553726f, -0.99939157f), RotorTurningDirection::RotorTurningDirectionCW);
         params.rotor_poses.emplace_back(Vector3r(-0.230f, 0.1926f, -0.0762f), Vector3r(-0.0223925f,  -0.02674078f, -0.99939157f), RotorTurningDirection::RotorTurningDirectionCW);
 
@@ -67,8 +68,6 @@ private:
 
 private:
     vector<unique_ptr<SensorBase>> sensor_storage_;
-    const Kinematics::State* kinematics_;
-    const Environment* environment_;
 };
 
 }} //namespace

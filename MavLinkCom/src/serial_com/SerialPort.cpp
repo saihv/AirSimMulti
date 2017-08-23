@@ -8,7 +8,7 @@
 #include <Wbemidl.h>
 #include <string>
 #include "Windows.h"
-
+#include "Utils.hpp"
 #pragma comment(lib, "wbemuuid.lib")
 
 class SerialPort::serialport_impl
@@ -139,7 +139,21 @@ public:
 		dcb.BaudRate = baudRate;
 		dcb.Parity = (byte)parity;
 		dcb.ByteSize = (byte)dataBits;
-		dcb.StopBits = (BYTE)bits;
+
+        switch (bits)
+        {
+        case StopBits_10:
+            dcb.StopBits = ONESTOPBIT;
+            break;
+        case StopBits_15:
+            dcb.StopBits = ONE5STOPBITS;
+            break;
+        case StopBits_20:
+            dcb.StopBits = TWOSTOPBITS;
+            break;
+        default:
+            break;
+        }
 
 		// Clear Handshake flags
 		dcb.fOutxCtsFlow = 0;
@@ -296,7 +310,8 @@ public:
 		{
 			return -1;
 		}
-		setAttributes(baudRate, parity, dataBits, sb, hs, readTimeout, writeTimeout);
+		if (setAttributes(baudRate, parity, dataBits, sb, hs, readTimeout, writeTimeout) != 0)
+			return -1;
 
 		closed_ = false;
 		return 0;
@@ -330,7 +345,7 @@ public:
 
 	int setAttributes(int baudRate, Parity parity, int dataBits, StopBits stopBits, Handshake handshake, int readTimeout, int writeTimeout)
 	{
-
+        unused(writeTimeout);
 		struct termios tty;
 		::memset(&tty, 0, sizeof tty);
 		if (tcgetattr(fd, &tty) != 0)

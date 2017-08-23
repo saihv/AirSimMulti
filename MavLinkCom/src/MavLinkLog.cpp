@@ -8,7 +8,13 @@
 using namespace mavlinkcom;
 using namespace mavlink_utils;
 
-MavLinkLog::MavLinkLog()
+uint64_t MavLinkFileLog::getTimeStamp()
+{
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+}
+
+
+MavLinkFileLog::MavLinkFileLog()
 {
 	ptr_ = nullptr;
 	reading_ = false;
@@ -16,16 +22,16 @@ MavLinkLog::MavLinkLog()
 	json_ = false;
 }
 
-MavLinkLog::~MavLinkLog()
+MavLinkFileLog::~MavLinkFileLog()
 {
 	close();
 }
 
-bool MavLinkLog::isOpen()
+bool MavLinkFileLog::isOpen()
 {
 	return reading_ || writing_;
 }
-void MavLinkLog::openForReading(const std::string& filename)
+void MavLinkFileLog::openForReading(const std::string& filename)
 {
 	close();
 	file_name_ = filename;
@@ -38,7 +44,7 @@ void MavLinkLog::openForReading(const std::string& filename)
 	reading_ = true;
 	writing_ = false;
 }
-void MavLinkLog::openForWriting(const std::string& filename, bool json)
+void MavLinkFileLog::openForWriting(const std::string& filename, bool json)
 {
 	close();
 	json_ = json;
@@ -54,7 +60,7 @@ void MavLinkLog::openForWriting(const std::string& filename, bool json)
 	writing_ = true;
 }
 
-void MavLinkLog::close()
+void MavLinkFileLog::close()
 {
 	FILE* temp = ptr_;
 	if (json_ && ptr_ != nullptr) {
@@ -84,12 +90,7 @@ uint64_t FlipEndianness(uint64_t v)
 	return result;
 }
 
-uint64_t MavLinkLog::getTimeStamp()
-{
-    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-}
-
-void MavLinkLog::write(const mavlinkcom::MavLinkMessage& msg, uint64_t timestamp)
+void MavLinkFileLog::write(const mavlinkcom::MavLinkMessage& msg, uint64_t timestamp)
 {
 	if (ptr_ != nullptr) {
 		if (reading_) {
@@ -109,6 +110,7 @@ void MavLinkLog::write(const mavlinkcom::MavLinkMessage& msg, uint64_t timestamp
                 timestamp = getTimeStamp();
             }
 			// for compatibility with QGroundControl we have to save the time field in big endian.
+            // todo: mavlink2 support?
             timestamp = FlipEndianness(timestamp);
 			fwrite(&timestamp, sizeof(uint64_t), 1, ptr_);
 			fwrite(&msg.magic, 1, 1, ptr_);
@@ -116,14 +118,15 @@ void MavLinkLog::write(const mavlinkcom::MavLinkMessage& msg, uint64_t timestamp
 			fwrite(&msg.seq, 1, 1, ptr_);
 			fwrite(&msg.sysid, 1, 1, ptr_);
 			fwrite(&msg.compid, 1, 1, ptr_);
-			fwrite(&msg.msgid, 1, 1, ptr_);
+            uint8_t msgid = msg.msgid & 0xff; // truncate to mavlink1 msgid
+			fwrite(&msgid, 1, 1, ptr_);
 			fwrite(&msg.payload64, 1, msg.len, ptr_);
 			fwrite(&msg.checksum, sizeof(uint16_t), 1, ptr_);
 		}
 	}
 }
 
-bool MavLinkLog::read(mavlinkcom::MavLinkMessage& msg, uint64_t& timestamp)
+bool MavLinkFileLog::read(mavlinkcom::MavLinkMessage& msg, uint64_t& timestamp)
 {
 	if (ptr_ != nullptr) {
 		if (writing_) {
@@ -159,7 +162,9 @@ bool MavLinkLog::read(mavlinkcom::MavLinkMessage& msg, uint64_t& timestamp)
 		if (s == 0) {
 			return false;
 		}
-		s = fread(&msg.msgid, 1, 1, ptr_);
+        uint8_t msgid = 0;
+		s = fread(&msgid, 1, 1, ptr_);
+        msg.msgid = msgid;
 		if (s < 1) {
 			return false;
 		}

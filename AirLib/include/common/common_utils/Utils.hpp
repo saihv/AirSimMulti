@@ -21,25 +21,8 @@
 #include <iostream>
 #include <limits>
 #include <queue>
-
 #include "type_utils.hpp"
 
-#ifndef _WIN32
-#include <limits.h> // needed for CHAR_BIT used below
-#endif
-
-//Stubs for C++17 optional type
-#if (defined __cplusplus) && (__cplusplus >= 201700L)
-#include <optional>
-#else
-#include "optional.hpp"
-#endif
-
-#if (defined __cplusplus) && (__cplusplus >= 201700L)
-using std::optional;
-#else
-using std::experimental::optional;
-#endif
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -71,11 +54,17 @@ static int _vscprintf(const char * format, va_list pargs)
     int retval;
     va_list argcopy;
     va_copy(argcopy, pargs);
+    IGNORE_FORMAT_STRING_ON
     retval = vsnprintf(NULL, 0, format, argcopy);
+    IGNORE_FORMAT_STRING_OFF
     va_end(argcopy);
     return retval;
 }
 #endif
+
+// Call this on a function parameter to suppress the unused paramter warning
+template <class T> inline 
+void unused(T const & result) { static_cast<void>(result); }
 
 namespace common_utils {
 
@@ -87,13 +76,22 @@ private:
     typedef std::stringstream stringstream;
     //this is not required for most compilers
     typedef unsigned int uint;
-    typedef unsigned long ulong;
     template <typename T>
     using time_point = std::chrono::time_point<T>;    
 
 
 public:
- 
+    class Logger {
+    public:
+        virtual void log(int level, const std::string& message)
+        {
+            if (level >= 0)
+                std::cout << message;
+            else
+                std::cerr << message;
+        }
+    };
+    
     static void enableImmediateConsoleFlush() {
         //disable buffering
         setbuf(stdout, NULL);
@@ -121,25 +119,25 @@ public:
         return static_cast<float>(radians * 180.0f / M_PI);
     }
 
-    static void logMessage(const char* message, ...) {
-        va_list args;
-        va_start(args, message);
-        
-        vprintf(message, args);
-        printf("\n");
-        fflush (stdout);
-        
-        va_end(args);
+    static Logger* getSetLogger(Logger* logger = nullptr)
+    {
+        static Logger logger_default_;
+        static Logger* logger_;
+
+        if (logger != nullptr)
+            logger_ = logger;
+        else if (logger_ == nullptr)
+            logger_ = &logger_default_;
+
+        return logger_;
     }
-    static void logError(const char* message, ...) {
-        va_list args;
-        va_start(args, message);
-        
-        vfprintf(stderr, message, args);
-        fprintf(stderr, "\n");
-        fflush (stderr);
-        
-        va_end(args);
+
+    static constexpr int kLogLevelInfo = 0;
+    static constexpr int kLogLevelWarn = -1;
+    static constexpr int kLogLevelError = -2;
+    static void log(std::string message, int level = kLogLevelInfo)
+    {
+        getSetLogger()->log(level, message);
     }
 
     template <typename T>
@@ -186,6 +184,20 @@ public:
         return ss.str();         
     }
 
+    static std::string getFileExtension(const string& str)
+    {
+        int len = static_cast<int>(str.size());
+        const char* ptr = str.c_str();
+        int i = 0;
+        for (i = len - 1; i >= 0; i--)
+        {
+            if (ptr[i] == '.')
+                break;
+        }
+        if (i < 0) return "";
+        return str.substr(i, len - i);
+    }
+
     static string formatNumber(double number, int digits_after_decimal = -1, int digits_before_decimal = -1, bool sign_always = false)
     {
         std::string format_string = "%";
@@ -205,11 +217,15 @@ public:
         va_list args;
         va_start(args, format);
 
+        IGNORE_FORMAT_STRING_ON
         auto size = _vscprintf(format, args) + 1U;
+        IGNORE_FORMAT_STRING_OFF
         std::unique_ptr<char[]> buf(new char[size] ); 
 
         #ifndef _MSC_VER
+            IGNORE_FORMAT_STRING_ON
             vsnprintf(buf.get(), size, format, args);
+            IGNORE_FORMAT_STRING_OFF
         #else
             vsnprintf_s(buf.get(), size, _TRUNCATE, format, args);
         #endif
@@ -355,6 +371,14 @@ public:
             & (static_cast<R>(-1) >> ((sizeof(R) * CHAR_BIT) - onecount));
     }
 
+    static void cleanupThread(std::thread& th)
+    {
+        if (th.joinable()) {
+            Utils::log("thread was cleaned up!", kLogLevelWarn);
+            th.detach();
+        }
+    }
+
     static inline int floorToInt(float x)
     {
         return static_cast<int> (std::floor(x));
@@ -431,7 +455,7 @@ public:
 
     static string to_string(time_point<system_clock> time)
     {
-        return to_string(now(), "%Y-%m-%d-%H-%M-%S");
+        return to_string(time, "%Y-%m-%d-%H-%M-%S");
 
         /* GCC doesn't implement put_time yet
         stringstream ss;
@@ -452,24 +476,32 @@ public:
     {
         return to_string(now(), "%Y%m%d%H%M%S");
     }
+    static int to_integer(std::string s)
+    {
+        return atoi(s.c_str());
+    }
     static string getEnv(const string& var)
     {
         char* ptr = std::getenv(var.c_str());
         return ptr ? ptr : "";
     }
 
-    //Unix timestamp
-    static unsigned long getTimeSinceEpochMillis(std::time_t* t = nullptr)
+    static uint64_t getUnixTimeStamp(std::time_t* t = nullptr)
     {
         std::time_t st = std::time(t);
         auto millies = static_cast<std::chrono::milliseconds>(st).count();
-        return static_cast<unsigned long>(millies);
+        return static_cast<uint64_t>(millies);
     }
     //high precision time in seconds since epoch
-    static double getTimeSinceEpoch(std::chrono::high_resolution_clock::time_point* t = nullptr)
+    static double getTimeSinceEpochSecs(std::chrono::high_resolution_clock::time_point* t = nullptr)
     {
         using Clock = std::chrono::high_resolution_clock;
         return std::chrono::duration<double>((t != nullptr ? *t : Clock::now() ).time_since_epoch()).count();
+    }
+    static uint64_t getTimeSinceEpochNanos(std::chrono::high_resolution_clock::time_point* t = nullptr)
+    {
+        using Clock = std::chrono::high_resolution_clock;
+        return static_cast<uint64_t>((t != nullptr ? *t : Clock::now() ).time_since_epoch().count());
     }
 
     template<typename T>

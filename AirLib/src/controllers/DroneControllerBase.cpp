@@ -3,17 +3,13 @@
 
 //in header only mode, control library is not available
 #ifndef AIRLIB_HEADER_ONLY
-//if using Unreal Build system then include precompiled header file first
-#ifdef AIRLIB_PCH
-#include "AirSim.h"
-#endif
 
+#include "controllers/DroneControllerBase.hpp"
 #include <functional>
 #include <exception>
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include "controllers/DroneControllerBase.hpp"
 #include "common/common_utils/FileSystem.hpp"
 
 namespace msr { namespace airlib {
@@ -30,6 +26,7 @@ float DroneControllerBase::getAutoLookahead(float velocity, float adaptive_looka
 
 float DroneControllerBase::getObsAvoidanceVelocity(float risk_dist, float max_obs_avoidance_vel)
 {
+    unused(risk_dist);
     return max_obs_avoidance_vel;
 }
 
@@ -94,7 +91,7 @@ bool DroneControllerBase::moveOnPath(const vector<Vector3r>& path, float velocit
 {
     //validate path size
     if (path.size() == 0) {
-        Utils::logMessage("moveOnPath terminated because path has no points");
+        Utils::log("moveOnPath terminated because path has no points", Utils::kLogLevelWarn);
         return true;
     }
 
@@ -115,7 +112,7 @@ bool DroneControllerBase::moveOnPath(const vector<Vector3r>& path, float velocit
     else {
         //if auto mode requested for lookahead then calculate based on velocity
         lookahead = getAutoLookahead(velocity, adaptive_lookahead);
-        Utils::logMessage("lookahead = %f, adaptive_lookahead = %f", lookahead, adaptive_lookahead);        
+        Utils::log(Utils::stringf("lookahead = %f, adaptive_lookahead = %f", lookahead, adaptive_lookahead));        
     }
 
     //add current position as starting point
@@ -124,8 +121,10 @@ bool DroneControllerBase::moveOnPath(const vector<Vector3r>& path, float velocit
     path3d.push_back(getPosition());
 
     std::ofstream flog;
-    if (log_to_file)
+    if (log_to_file_) {
         common_utils::FileSystem::createLogFile("MoveToPosition", flog);
+        flog << "seg_index\toffset\tx\ty\tz\tgoal_dist\tseg_index\toffset\tx\ty\tz\tlookahead\tlookahead_error\tseg_index\toffset\tx\ty\tz";
+    }
 
     Vector3r point;
     float path_length = 0;
@@ -154,6 +153,7 @@ bool DroneControllerBase::moveOnPath(const vector<Vector3r>& path, float velocit
     cur_path_loc.offset = 0;
     cur_path_loc.position = path3d[0];
 
+    float lookahead_error_increasing = 0;
     float lookahead_error = 0;
     Waiter waiter(getCommandPeriod());
 
@@ -223,10 +223,21 @@ bool DroneControllerBase::moveOnPath(const vector<Vector3r>& path, float velocit
                                                             //if adaptive lookahead is enabled the calculate lookahead error (see above fig)
             if (adaptive_lookahead) {
                 const Vector3r& actual_on_goal = goal_normalized * goal_dist;
-                lookahead_error = (actual_vect - actual_on_goal).norm() * adaptive_lookahead;
+                float error = (actual_vect - actual_on_goal).norm() * adaptive_lookahead;
+                if (error > lookahead_error) {
+                    lookahead_error_increasing++;
+                    if (lookahead_error_increasing > 100) {
+                        throw std::runtime_error("lookahead error is continually increasing so we do not have safe control, aborting moveOnPath operation");
+                    }
+                }
+                else { 
+                    lookahead_error_increasing = 0; 
+                }
+                lookahead_error = error;
             }
         }
         else {
+            lookahead_error_increasing = 0;
             goal_dist = 0;
             lookahead_error = 0; //this is not really required because we will exit
         }
@@ -235,7 +246,7 @@ bool DroneControllerBase::moveOnPath(const vector<Vector3r>& path, float velocit
         //     VectorMath::toString(getPosition()).c_str(), goal_dist, VectorMath::toString(cur_path_loc.position).c_str(),
         //     VectorMath::toString(next_path_loc.position).c_str(), lookahead_error);
 
-        if (log_to_file)
+        if (log_to_file_)
             flog << cur_path_loc.seg_index << "\t" << cur_path_loc.offset << "\t" << cur_path_loc.position.x() << "\t" << cur_path_loc.position.y() << "\t" << cur_path_loc.position.z() << "\t" << goal_dist << "\t";
 
         //if drone moved backward, we don't want goal to move backward as well
@@ -244,7 +255,7 @@ bool DroneControllerBase::moveOnPath(const vector<Vector3r>& path, float velocit
         if (goal_dist >= 0) {
             float overshoot = setNextPathPosition(path3d, path_segs, cur_path_loc, goal_dist, cur_path_loc);
             if (overshoot)
-                Utils::logMessage("overshoot=%f", overshoot);
+                Utils::log(Utils::stringf("overshoot=%f", overshoot));
         }
         //else
         //    Utils::logMessage("goal_dist was negative: %f", goal_dist);
@@ -252,7 +263,7 @@ bool DroneControllerBase::moveOnPath(const vector<Vector3r>& path, float velocit
         //compute next target on path
         setNextPathPosition(path3d, path_segs, cur_path_loc, lookahead + lookahead_error, next_path_loc);
 
-        if (log_to_file) {
+        if (log_to_file_) {
             flog << cur_path_loc.seg_index << "\t" << cur_path_loc.offset << "\t" << cur_path_loc.position.x() << "\t" << cur_path_loc.position.y() << "\t" << cur_path_loc.position.z() << "\t" << lookahead  << "\t" << lookahead_error  << "\t";
             flog << next_path_loc.seg_index << "\t" << next_path_loc.offset << "\t" << next_path_loc.position.x() << "\t" << next_path_loc.position.y() << "\t" << next_path_loc.position.z() << std::endl;
         }
@@ -273,7 +284,7 @@ bool DroneControllerBase::moveToZ(float z, float velocity, const YawMode& yaw_mo
 {
     Vector2r cur_xy = getPositionXY();
     vector<Vector3r> path { Vector3r(cur_xy.x(), cur_xy.y(), z) };
-    return moveOnPath(path, velocity, DrivetrainType::MaxDegreeOfFreedome, yaw_mode, lookahead, adaptive_lookahead,
+    return moveOnPath(path, velocity, DrivetrainType::MaxDegreeOfFreedom, yaw_mode, lookahead, adaptive_lookahead,
         cancelable_action);
 }
 
@@ -281,7 +292,7 @@ bool DroneControllerBase::rotateToYaw(float yaw, float margin, CancelableBase& c
 {
     YawMode yaw_mode(false, VectorMath::normalizeAngleDegrees(yaw));
     Waiter waiter(getCommandPeriod());
-	auto start_pos = getPosition();
+    auto start_pos = getPosition();
     bool is_yaw_reached;
     while ((is_yaw_reached = isYawWithinMargin(yaw, margin)) == false) {
         if (!moveToPosition(start_pos, yaw_mode))
@@ -299,7 +310,7 @@ bool DroneControllerBase::rotateByYawRate(float yaw_rate, float duration, Cancel
     if (duration <= 0)
         return true;
 
-	auto start_pos = getPosition();
+    auto start_pos = getPosition();
     YawMode yaw_mode(true, yaw_rate);
     Waiter waiter(getCommandPeriod(), duration);
     do {
@@ -310,10 +321,61 @@ bool DroneControllerBase::rotateByYawRate(float yaw_rate, float duration, Cancel
     return waiter.is_timeout();
 }
 
+bool DroneControllerBase::takeoff(float max_wait_seconds, CancelableBase& cancelable_action)
+{
+    unused(max_wait_seconds);
+    return moveToPosition(0, 0, -6, 0.5f, DrivetrainType::MaxDegreeOfFreedom, YawMode::Zero(), -1, 1, cancelable_action);
+}
+
+bool DroneControllerBase::goHome(CancelableBase& cancelable_action)
+{
+    return moveToPosition(0, 0, 0, 0.5f, DrivetrainType::MaxDegreeOfFreedom, YawMode::Zero(), -1, 1, cancelable_action);
+}
+
+bool DroneControllerBase::land(float max_wait_seconds, CancelableBase& cancelable_action)
+{
+    unused(max_wait_seconds);
+    return moveByVelocity(0, 0, 0.2f, 3600, DrivetrainType::MaxDegreeOfFreedom, YawMode::Zero(), cancelable_action);
+}
+
 bool DroneControllerBase::hover(CancelableBase& cancelable_action)
 {
     return moveToZ(getZ(), 0.5f, YawMode{ true,0 }, 1.0f, false, cancelable_action);
 }
+
+void DroneControllerBase::simSetPose(const Vector3r& position, const Quaternionr& orientation)
+{
+    unused(position);
+    unused(orientation);
+    //derived flight controller class should provide implementation if they support exclusive sim*** methods
+}
+void DroneControllerBase::simAddCamera(VehicleCameraBase* camera)
+{
+    cameras_.push_back(camera);
+}
+void DroneControllerBase::simNotifyRender()
+{
+    //derived class should override this if it supports sim**** methods
+}
+VehicleCameraBase* DroneControllerBase::simGetCamera(int index)
+{
+    return cameras_.at(index);
+}
+vector<VehicleCameraBase::ImageResponse> DroneControllerBase::simGetImages(const vector<DroneControllerBase::ImageRequest>& request)
+{
+    StatusLock lock(this);
+
+    vector<VehicleCameraBase::ImageResponse> response;
+
+    for (const auto& item : request) {
+        VehicleCameraBase* camera = simGetCamera(item.camera_id);
+        const auto& item_response = camera->getImage(item.image_type, item.pixels_as_float, item.compress);
+        response.push_back(item_response);
+    }
+
+    return response;
+}
+
 
 bool DroneControllerBase::moveByVelocity(float vx, float vy, float vz, const YawMode& yaw_mode)
 {
@@ -357,14 +419,14 @@ bool DroneControllerBase::setSafety(SafetyEval::SafetyViolationType enable_reaso
     safety_eval_ptr_->setSafety(enable_reasons, obs_clearance, obs_startegy, origin, xy_length, max_z, min_z);
 
     obs_avoidance_vel_ = obs_avoidance_vel;
-    Utils::logMessage("obs_avoidance_vel: %f", obs_avoidance_vel_);
+    Utils::log(Utils::stringf("obs_avoidance_vel: %f", obs_avoidance_vel_));
 
     return true;
 }
 
-bool DroneControllerBase::moveByManual(float vx_max, float vy_max, float z_min, DrivetrainType drivetrain, const YawMode& yaw_mode, float duration, CancelableBase& cancelable_action)
+bool DroneControllerBase::moveByManual(float vx_max, float vy_max, float z_min, float duration, DrivetrainType drivetrain, const YawMode& yaw_mode, CancelableBase& cancelable_action)
 {
-    const float kMaxMessageAge = 1, kMaxVelocity = 2, trim_duration = 1, kMinCountForTrim = 10, kMaxTrim = 100, kMaxRCValue = 10000;
+    const float kMaxMessageAge = 0.1f /* 0.1 sec */, kTrimduration = 1, kMinCountForTrim = 10, kMaxTrim = 100, kMaxRCValue = 10000;
 
     if (duration <= 0)
         return true;
@@ -373,7 +435,7 @@ bool DroneControllerBase::moveByManual(float vx_max, float vy_max, float z_min, 
     Quaternionr starting_quaternion = getOrientation();
 
     //get trims
-    Waiter waiter_trim(getCommandPeriod(), trim_duration);
+    Waiter waiter_trim(getCommandPeriod(), kTrimduration);
     RCData rc_data_trims;
     uint count = 0;
     do {
@@ -394,13 +456,13 @@ bool DroneControllerBase::moveByManual(float vx_max, float vy_max, float z_min, 
     if (rc_data_trims.isAnyMoreThan(kMaxTrim))
         throw VehicleMoveException(Utils::stringf("RC trims does not seem to be valid: %s", rc_data_trims.toString().c_str()));
 
-    Utils::logMessage("RCData Trims: %s", rc_data_trims.toString().c_str());
+    Utils::log(Utils::stringf("RCData Trims: %s", rc_data_trims.toString().c_str()));
 
     Waiter waiter(getCommandPeriod(), duration);
     do {
 
         RCData rc_data = getRCData();
-        double age = timestampNow() - rc_data.timestamp;
+        TTimeDelta age = clock()->elapsedSince(rc_data.timestamp);
         if (age <= kMaxMessageAge) {
             rc_data.subtract(rc_data_trims);
 
@@ -419,11 +481,11 @@ bool DroneControllerBase::moveByManual(float vx_max, float vy_max, float z_min, 
                 moveByVelocityZ(vel_body.x(), vel_body.y(), vz, adj_yaw_mode);
             }
             catch(const DroneControllerBase::UnsafeMoveException& ex) {
-                Utils::logError("Safety violation: %s", ex.result.message.c_str());
+                Utils::log(Utils::stringf("Safety violation: %s", ex.result.message.c_str()), Utils::kLogLevelWarn);
             }
         }
         else
-            Utils::logMessage("RCData had too old timestamp: %f", age);
+            Utils::log(Utils::stringf("RCData had too old timestamp: %f", age));
 
     } while (waiter.sleep(cancelable_action) && !waiter.is_timeout());
 
@@ -530,11 +592,11 @@ bool DroneControllerBase::safetyCheckDestination(const Vector3r& dest_pos)
 
 void DroneControllerBase::logHomePoint()
 {
-    GeoPoint homepoint = getHomePoint();
+    GeoPoint homepoint = getHomeGeoPoint();
     if (std::isnan(homepoint.longitude))
-        Utils::logError("Home point is not set!");
+        Utils::log("Home point is not set!", Utils::kLogLevelWarn);
     else
-        Utils::logMessage(homepoint.to_string().c_str());
+        Utils::log(homepoint.to_string().c_str());
 }
 
 float DroneControllerBase::setNextPathPosition(const vector<Vector3r>& path, const vector<PathSegment>& path_segs,
@@ -558,7 +620,7 @@ float DroneControllerBase::setNextPathPosition(const vector<Vector3r>& path, con
         offset = 0;
 
         if (&cur_path_loc == &next_path_loc)
-            Utils::logMessage("segment %d done: x=%f, y=%f, z=%f", i, path.at(i).x(), path.at(i).z(), path.at(i).z());
+            Utils::log(Utils::stringf("segment %d done: x=%f, y=%f, z=%f", i, path.at(i).x(), path.at(i).z(), path.at(i).z()));
 
         ++i;
     }
@@ -591,6 +653,7 @@ void DroneControllerBase::adjustYaw(float x, float y, DrivetrainType drivetrain,
 
 void DroneControllerBase::moveToPathPosition(const Vector3r& dest, float velocity, DrivetrainType drivetrain, /* pass by value */ YawMode yaw_mode, float last_z)
 {
+    unused(last_z);
     //validate dest
     if (dest.hasNaN())
         throw std::invalid_argument(VectorMath::toString(dest,"dest vector cannot have NaN: "));
@@ -617,7 +680,7 @@ void DroneControllerBase::moveToPathPosition(const Vector3r& dest, float velocit
     else { //cur dest is too close than the distance we would travel
             //generate velocity vector that is same size as cur_dest_norm / command period
             //this velocity vect when executed for command period would yield cur_dest_norm
-        Utils::logMessage("Too close dest: cur_dest_norm=%f, expected_dist=%f", cur_dest_norm, expected_dist);
+        Utils::log(Utils::stringf("Too close dest: cur_dest_norm=%f, expected_dist=%f", cur_dest_norm, expected_dist));
         velocity_vect = (cur_dest / cur_dest_norm) * (cur_dest_norm / getCommandPeriod());   
     }
 
@@ -635,74 +698,20 @@ bool DroneControllerBase::isYawWithinMargin(float yaw_target, float margin)
     return std::abs(yaw_current - yaw_target) <= margin;
 }    
 
-void DroneControllerBase::setImageTypeForCamera(int camera_id, ImageType type)
-{
-    StatusLock lock(this);
-
-    if (type == ImageType::None)
-        enabled_images.erase(camera_id);
-    else
-        enabled_images[camera_id] = type;
-}
-
-DroneControllerBase::ImageType DroneControllerBase::getImageTypeForCamera(int camera_id)
-{
-    StatusLock lock(this);
-
-    auto it = enabled_images.find(camera_id);
-    if (it != enabled_images.end())
-        return it->second;
-    return ImageType::None;
-}
-
-void DroneControllerBase::setImageForCamera(int camera_id, ImageType type, const vector<uint8_t>& image)
-{
-    StatusLock lock(this);
-
-    //TODO: perf work
-    auto it = images.find(camera_id);
-    if (it != images.end())
-        (it->second)[type] = image;
-    
-    auto new_list = EnumClassUnorderedMap<ImageType, vector<uint8_t>>();
-    new_list[type] = image;
-    images[camera_id] = new_list;
-}
-
-vector<uint8_t> DroneControllerBase::getImageForCamera(int camera_id, ImageType type)
-{
-    StatusLock lock(this);
-
-    //TODO: bug: MSGPACK bombs out if vector if of 0 size
-    static vector<uint8_t> empty_vec(1);
-
-    vector<uint8_t> result;
-
-    //TODO: perf work
-    auto it = images.find(camera_id);
-    if (it != images.end()) {
-        auto it2 = it->second.find(type);
-        if (it2 != it->second.end())
-            result = it2->second;
-        else
-            result = empty_vec;
-
-    } else
-        result = empty_vec;
-
-    if (result.size() == 0) {
-        result = empty_vec;
-    }
-
-    return result;
-}
-
 Pose DroneControllerBase::getDebugPose()
 {
     //by default indicate that we don't have alternative pose info
     return Pose::nanPose();
 }
 
+CollisionInfo DroneControllerBase::getCollisionInfo()
+{
+    return collision_info_;
+}
+void DroneControllerBase::setCollisionInfo(const CollisionInfo& collision_info)
+{
+    collision_info_ = collision_info;
+}
 
 }} //namespace
 #endif

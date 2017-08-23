@@ -20,6 +20,10 @@ namespace LogViewer.Model
 
         public string Type { get; set; }
 
+        // in case the Name is not unique (as is the case with multi_id formats in px4 logs) 
+        // the IDataLog implementor can use this field instead.
+        public int Id { get; set; }
+
         public List<LogItemSchema> ChildItems { get; set; }
 
         public bool HasChildren
@@ -50,6 +54,52 @@ namespace LogViewer.Model
                     return this;
                 return this.Parent.Root;
             }
+        }
+
+        internal void Combine(LogItemSchema s)
+        {
+            Dictionary<string, LogItemSchema> index = new Dictionary<string, Model.LogItemSchema>();
+            if (this.HasChildren)
+            {
+                foreach (var i in this.ChildItems.ToArray())
+                {
+                    index[i.Name] = i;
+                }
+            }
+            if (s.HasChildren)
+            {
+                foreach (var child in s.ChildItems.ToArray())
+                {
+                    LogItemSchema found = null;
+                    if (index.TryGetValue(child.Name, out found))
+                    {
+                        found.Combine(child);
+                    }
+                    else
+                    {
+                        LogItemSchema copy = child.Clone();
+                        copy.Parent = this;
+                        this.ChildItems.Add(child);
+                    }
+                }
+            }
+        }
+
+        private LogItemSchema Clone()
+        {
+            LogItemSchema copy = new LogItemSchema() { Id = this.Id, Name = this.Name, Type = this.Type };
+            if (this.HasChildren)
+            {
+                List<LogItemSchema> copyChildren = new List<Model.LogItemSchema>();
+                foreach (var child in this.ChildItems.ToArray())
+                {
+                    var childClone = child.Clone();
+                    childClone.Parent = copy;
+                    copyChildren.Add(childClone);
+                }
+                copy.ChildItems = copyChildren;
+            }
+            return copy;
         }
     }
 

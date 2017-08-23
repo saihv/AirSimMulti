@@ -32,26 +32,30 @@ public: //methods
     //*** Start: UpdatableState implementation ***//
     virtual void reset() override
     {
+        GpsBase::reset();
+
         freq_limiter_.reset();
         delay_line_.reset();
 
         eph_filter.reset();
         epv_filter.reset();
 
-        addOutputToDelayLine(eph_filter.getOutput(), epv_filter.getOutput(), 0);
+        addOutputToDelayLine(eph_filter.getOutput(), epv_filter.getOutput());
     }
 
-    virtual void update(real_T dt) override
+    virtual void update() override
     {
-        freq_limiter_.update(dt);
-        eph_filter.update(dt);
-        epv_filter.update(dt);
+        GpsBase::update();
+
+        freq_limiter_.update();
+        eph_filter.update();
+        epv_filter.update();
 
         if (freq_limiter_.isWaitComplete()) {   //update output
-            addOutputToDelayLine(eph_filter.getOutput(), epv_filter.getOutput(), freq_limiter_.getLastElapsedIntervalSec());
+            addOutputToDelayLine(eph_filter.getOutput(), epv_filter.getOutput());
         }
 
-        delay_line_.update(dt);
+        delay_line_.update();
 
         if (freq_limiter_.isWaitComplete())
             setOutput(delay_line_.getOutput());
@@ -61,13 +65,13 @@ public: //methods
 
     virtual ~GpsSimple() = default;
 private:
-    void addOutputToDelayLine(real_T eph, real_T epv, real_T dt)
+    void addOutputToDelayLine(real_T eph, real_T epv)
     {
         Output output;
         const GroundTruth& ground_truth = getGroundTruth();
 
         //GNSS
-        output.gnss.time_utc = static_cast<long>(freq_limiter_.getTimestamp());
+        output.gnss.time_utc = static_cast<uint64_t>(clock()->nowNanos() / 1.0E3);
         output.gnss.geo_point = ground_truth.environment->getState().geo_point;
         output.gnss.eph = eph;
         output.gnss.epv = epv;

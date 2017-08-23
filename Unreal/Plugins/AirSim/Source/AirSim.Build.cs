@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using UnrealBuildTool;
 using System.IO;
 
@@ -23,8 +26,10 @@ public class AirSim : ModuleRules
         CppCompileWithRpc
     }
 
-    private void SetupCompileMode(CompileMode mode, TargetInfo Target)
+    private void SetupCompileMode(CompileMode mode, ReadOnlyTargetRules Target)
     {
+        LoadAirSimDependency(Target, "MavLinkCom", "MavLinkCom");
+
         switch (mode)
         {
             case CompileMode.HeaderOnlyNoRpc:
@@ -42,7 +47,6 @@ public class AirSim : ModuleRules
                 Definitions.Add("AIRLIB_NO_RPC=1");
                 break;
             case CompileMode.CppCompileWithRpc:
-                LoadAirSimDependency(Target, "MavLinkCom", "MavLinkCom");
                 LoadAirSimDependency(Target, "rpclib", "rpc");
                 break;
             default:
@@ -51,9 +55,13 @@ public class AirSim : ModuleRules
 
     }
 
-    public AirSim(TargetInfo Target)
+    public AirSim(ReadOnlyTargetRules Target) : base(Target)
     {
-        UEBuildConfiguration.bForceEnableExceptions = true;
+        //bEnforceIWYU = true; //to support 4.16
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        //below is no longer supported in 4.16
+        bEnableExceptions = true;
+
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "RenderCore", "RHI" });
         PrivateDependencyModuleNames.AddRange(new string[] { "UMG", "Slate", "SlateCore" });
 
@@ -61,26 +69,14 @@ public class AirSim : ModuleRules
         Definitions.Add("_SCL_SECURE_NO_WARNINGS=1");
         Definitions.Add("CRT_SECURE_NO_WARNINGS=1");
 
-        AddEigenDependency();
         PrivateIncludePaths.Add(Path.Combine(AirSimPath, "include"));
+        PrivateIncludePaths.Add(Path.Combine(AirSimPath, "deps", "eigen3"));
         AddOSLibDependencies(Target);
-        LoadAirSimDependency(Target, "MavLinkCom", "MavLinkCom");
 
-        SetupCompileMode(CompileMode.HeaderOnlyWithRpc, Target);
+        SetupCompileMode(CompileMode.CppCompileWithRpc, Target);
     }
 
-    private void AddEigenDependency()
-    {
-        string eigenPath = System.Environment.GetEnvironmentVariable("EIGEN_ROOT");
-        if (string.IsNullOrEmpty(eigenPath) || !System.IO.Directory.Exists(eigenPath) || !System.IO.Directory.Exists(Path.Combine(eigenPath, "eigen3")))
-        {
-            throw new System.Exception("EIGEN_ROOT is not defined, or points to a non-existant directory, please set this environment variable.  " +
-                "See readme: " + readmurl);
-        }
-        PrivateIncludePaths.Add(Path.Combine(eigenPath, "eigen3"));
-    }
-
-    private void AddOSLibDependencies(TargetInfo Target)
+    private void AddOSLibDependencies(ReadOnlyTargetRules Target)
     {
         if (Target.Platform == UnrealTargetPlatform.Win64)
         {
@@ -96,13 +92,13 @@ public class AirSim : ModuleRules
         }
     }
 
-    private bool LoadAirSimDependency(TargetInfo Target, string LibName, string LibFileName)
+    private bool LoadAirSimDependency(ReadOnlyTargetRules Target, string LibName, string LibFileName)
     {
         string LibrariesPath = Path.Combine(AirSimPath, "deps", LibName, "lib");
         return AddLibDependency(LibName, LibrariesPath, LibFileName, Target, true);
     }
 
-    private bool AddLibDependency(string LibName, string LibPath, string LibFileName, TargetInfo Target, bool IsAddLibInclude)
+    private bool AddLibDependency(string LibName, string LibPath, string LibFileName, ReadOnlyTargetRules Target, bool IsAddLibInclude)
     {
         string PlatformString = (Target.Platform == UnrealTargetPlatform.Win64 || Target.Platform == UnrealTargetPlatform.Mac) ? "x64" : "x86";
         string ConfigurationString = (Target.Configuration == UnrealTargetConfiguration.Debug) ? "Debug" : "Release";
@@ -115,6 +111,7 @@ public class AirSim : ModuleRules
 
             PublicAdditionalLibraries.Add(Path.Combine(LibPath, PlatformString, ConfigurationString, LibFileName + ".lib"));
         } else if (Target.Platform == UnrealTargetPlatform.Linux || Target.Platform == UnrealTargetPlatform.Mac) {
+            isLibrarySupported = true;
             PublicAdditionalLibraries.Add(Path.Combine(LibPath, "lib" + LibFileName + ".a"));
         }
 

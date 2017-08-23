@@ -1,8 +1,9 @@
 #pragma once
 
+#include "controllers/VehicleCameraBase.hpp"
 #include "common/UpdatableObject.hpp"
 #include "controllers/VehicleControllerBase.hpp"
-#include "rpc/ControlServerBase.hpp"
+#include "api/ControlServerBase.hpp"
 
 
 class VehicleConnectorBase : public msr::airlib::UpdatableObject
@@ -26,4 +27,5 @@ public:
     virtual void stopApiServer() = 0;
     virtual bool isApiServerStarted() = 0;
     virtual msr::airlib::VehicleControllerBase* getController() = 0;
+    virtual msr::airlib::VehicleCameraBase* getCamera(unsigned int index = 0) = 0;
 };

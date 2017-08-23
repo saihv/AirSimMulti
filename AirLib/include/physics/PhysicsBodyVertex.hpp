@@ -11,38 +11,55 @@
 namespace msr { namespace airlib {
 
 class PhysicsBodyVertex : public UpdatableObject {
-protected:
-    virtual void setWrench(Wrench& wrench, real_T dt) = 0;
+protected: 
+    virtual void setWrench(Wrench& wrench)
+    {
+        unused(wrench);
+        //derived class should override if this is force/torque 
+        //generating vertex
+    }
 public:
+    real_T getDragFactor() const
+    {
+        return drag_factor_;
+    }
+    void setDragFactor(real_T val)
+    {
+        drag_factor_ = val;
+    }
+
     PhysicsBodyVertex()
     {
         //allow default constructor with later call for initialize
     }
-    PhysicsBodyVertex(const Vector3r& position, const Vector3r& normal)
+    PhysicsBodyVertex(const Vector3r& position, const Vector3r& normal, real_T drag_factor = 0)
     {
-        initialize(position, normal);
+        initialize(position, normal, drag_factor);
     }
-    void initialize(const Vector3r& position, const Vector3r& normal)
+    void initialize(const Vector3r& position, const Vector3r& normal, real_T drag_factor = 0)
     {
         initial_position_ = position;
         initial_normal_ = normal;
-
-        PhysicsBodyVertex::reset();
+        drag_factor_ = drag_factor;
     }
 
 
     //*** Start: UpdatableState implementation ***//
     virtual void reset() override
     {
+        UpdatableObject::reset();
+
         position_ = initial_position_;
         normal_ = initial_normal_;
 
         current_wrench_ = Wrench::zero();
     }
 
-    virtual void update(real_T dt) override
+    virtual void update() override
     {
-        setWrench(current_wrench_, dt);
+        UpdatableObject::update();
+
+        setWrench(current_wrench_);
     }
     //*** End: UpdatableState implementation ***//
 
@@ -77,6 +94,7 @@ private:
     Vector3r initial_position_, position_;
     Vector3r initial_normal_, normal_;
     Wrench current_wrench_;
+    real_T drag_factor_;
 };
 
 }} //namespace

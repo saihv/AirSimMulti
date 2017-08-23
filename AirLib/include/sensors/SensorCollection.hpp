@@ -72,15 +72,19 @@ public:
     //*** Start: UpdatableState implementation ***//
     virtual void reset() override
     {
+        UpdatableObject::reset();
+
         for (auto& pair : sensors_) {
             pair.second->reset();
         }
     }
 
-    virtual void update(real_T dt) override
+    virtual void update() override
     {
+        UpdatableObject::update();
+
         for (auto& pair : sensors_) {
-            pair.second->update(dt);
+            pair.second->update();
         }
     }
 

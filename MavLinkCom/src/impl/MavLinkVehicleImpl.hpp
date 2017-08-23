@@ -24,7 +24,7 @@ using namespace mavlinkcom;
 namespace mavlinkcom_impl {
 	class MavLinkVehicleImpl : public MavLinkNodeImpl {
 	public:
-		MavLinkVehicleImpl(int local_system_id, int local_component_id);
+		MavLinkVehicleImpl(int localSystemId, int localComponentId);
 		~MavLinkVehicleImpl();
 	public:
 		AsyncResult<bool> armDisarm(bool arm);
@@ -81,7 +81,9 @@ namespace mavlinkcom_impl {
 		std::mutex state_mutex_;
 		int state_version_ = 0;
         bool control_requested_ = false;
+		bool control_request_sent_ = false;
         int requested_mode_ = 0;
+		int previous_mode_ = 0;
 		// this latch is reset even time we receive a heartbeat, this is useful for operations that we
 		// want to throttle to the heartbeat rate.
 		bool heartbeat_throttle_ = false;

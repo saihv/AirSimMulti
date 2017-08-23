@@ -1,0 +1,94 @@
+{
+  "LocalHostIp": "192.168.1.10",
+  "RecordUIVisible": true,
+  "LogMessagesVisible": true,
+  "ViewMode": "FlyWithMe",
+  "FpvVehicleName": "Pixhawk",
+  "UsageScenario": "",
+  "RpcEnabled": true,
+  "PhysicsEngineName": "FastPhysicsEngine",
+  "EnableCollisionPassthrogh": false,
+  "LogMessagesVisible": true,
+  "RosFlight": {
+    "RemoteControlID": 0
+  },
+  "Recording": {
+    "RecordOnMove": false,
+    "RecordInterval": 0.05
+  },
+  "SceneCaptureSettings" : {
+    "Width": 256,
+    "Height": 144,
+    "FOV_Degrees": 90,
+    "AutoExposureSpeed": 100,
+    "AutoExposureBias": 0,
+    "AutoExposureMaxBrightness": 0.64,
+    "AutoExposureMinBrightness": 0.03,
+    "MotionBlurAmount": 0,
+    "TargetGamma": 1.0
+  },  
+  "DepthCaptureSettings" : {
+    "Width": 256,
+    "Height": 144,
+    "FOV_Degrees": 90,
+    "AutoExposureSpeed": 100,
+    "AutoExposureBias": 0,
+    "AutoExposureMaxBrightness": 0.64,
+    "AutoExposureMinBrightness": 0.03,
+    "MotionBlurAmount": 0,
+    "TargetGamma": 1.0
+  },  
+  "SegCaptureSettings" : {
+    "Width": 256,
+    "Height": 144,
+    "FOV_Degrees": 90,
+    "AutoExposureSpeed": 100,
+    "AutoExposureBias": 0,
+    "AutoExposureMaxBrightness": 0.64,
+    "AutoExposureMinBrightness": 0.03,
+    "MotionBlurAmount": 0,
+    "TargetGamma": 1.0
+  },  
+  "SimpleFlight": {
+    "RemoteControlID": 0
+  },
+  "Pixhawk": {
+    "LogViewerHostIp": "127.0.0.1",
+    "LogViewerPort": 14388,
+    "OffboardCompID": 1,
+    "OffboardSysID": 134,
+    "QgcHostIp": "127.0.0.1",
+    "QgcPort": 14550,
+    "SerialBaudRate": 115200,
+    "SerialPort": "*",
+    "SimCompID": 42,
+    "SimSysID": 142,
+    "SitlIp": "127.0.0.1",
+    "SitlPort": 14556,
+    "UdpIp": "127.0.0.1",
+    "UdpPort": 14560,
+    "UseSerial": false,
+    "VehicleCompID": 1,
+    "VehicleSysID": 135
+  },
+  "Quad": {
+    "LogViewerHostIp": "127.0.0.1",
+    "LogViewerPort": 14388,
+    "OffboardCompID": 1,
+    "OffboardSysID": 136,
+    "QgcHostIp": "127.0.0.1",
+    "QgcPort": 14550,
+    "SerialBaudRate": 115200,
+    "SerialPort": "*",
+    "SimCompID": 42,
+    "SimSysID": 143,
+    "SitlIp": "127.0.0.1",
+    "SitlPort": 14558,
+    "UdpIp": "127.0.0.1",
+    "UdpPort": 14562,
+    "UseSerial": false,
+    "VehicleCompID": 1,
+    "VehicleSysID": 137
+  }
+
+}

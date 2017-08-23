@@ -142,8 +142,12 @@ public:
         //Below 51km: Practical Meteorology by Roland Stull, pg 12
         //Above 51km: http://www.braeunig.us/space/atmmodel.htm
         //Validation data: https://www.avs.org/AVS/files/c7/c7edaedb-95b2-438f-adfb-36de54f87b9e.pdf
+
+        //TODO: handle -ve altitude better (shouldn't grow indefinitely!)
+
         if (geopot_height <= 11)
-            return  101325 * powf(288.15f / std_temperature, -5.255877f);
+            //at alt 0, return sea level pressure
+            return  SeaLevelPressure * powf(288.15f / std_temperature, -5.255877f);
         else if (geopot_height <= 20)
             return 22632.06f * expf(-0.1577f * (geopot_height - 11));
         else if (geopot_height <= 32)
@@ -352,7 +356,7 @@ public: //consts
     static constexpr float SeaLevelAirDensity = 1.225f; //kg/m^3
     static constexpr float Gravity = 9.80665f;    //m/s^2
     static constexpr float Radius = EARTH_RADIUS; //m
-
+    static constexpr float SpeedOfLight = 299792458.0f; //m
 
 private:
     /* magnetic field */

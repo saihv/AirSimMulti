@@ -37,7 +37,7 @@ public: //types
     };
 
     enum NavSatStatusType : char {
-        STATUS_NO_FIX =  -1,        //unable to fix position
+        STATUS_NO_FIX =  80,       //unable to fix position
         STATUS_FIX =      0,        //unaugmented fix
         STATUS_SBAS_FIX = 1,        //with satellite-based augmentation
         STATUS_GBAS_FIX = 2         //with ground-based augmentation
@@ -74,7 +74,7 @@ public: //types
         real_T eph, epv;    //GPS HDOP/VDOP horizontal/vertical dilution of position (unitless), 0-100%
         Vector3r velocity;
         GnssFixType fix_type;
-        long time_utc = 0;
+        uint64_t time_utc = 0;
     };
 
     struct NavSatFix {

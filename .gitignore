@@ -25,7 +25,7 @@ bld/
 Intermediate/
 Binaries/
 llvm-build/
-llvm-source/
+llvm-source*/
 
 # CMake files
 CMakeFiles/
@@ -48,7 +48,7 @@ obj/
 *.opensdf
 *.sdf
 *.suo
-*.suo
+*_BuiltData.uasset
 
 # Visual Studio 2015 cache/options directory
 .vs/
@@ -234,6 +234,9 @@ FakesAssemblies/
 # Visual Studio 6 workspace options file
 *.opt
 
+# compiled python files
+*.pyc
+
 # LightSwitch generated files
 GeneratedArtifacts/
 _Pvt_Extensions/
@@ -284,6 +287,7 @@ ModelManifest.xml
 /cmake/HelloDrone/HelloDrone
 /cmake/DroneShell/DroneShell
 /cmake/DroneServer/DroneServer
+cmake/AirLibUnitTests/Makefile
 external/
 deps/
 
@@ -294,7 +298,6 @@ deps/
 
 /boost
 /eigen
-/Eigen3
 /build_debug
 /cmake/CPackSourceConfig.cmake
 /cmake/CPackConfig.cmake
@@ -310,6 +313,7 @@ deps/
 /AirLib/include/controllers/latex
 /Eigen3
 /AirLib/lib/libAirLib.a
-
-!AirLib/build
+/cmake-3.7.2-win64-x64
+/cmake-3.7.2-win64-x64.zip
+/3.3.2.zip
 

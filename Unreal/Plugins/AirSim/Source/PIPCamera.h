@@ -1,90 +1,81 @@
 #pragma once
 
+#include "CoreMinimal.h"
+#include "Components/SceneCaptureComponent2D.h"
 #include "Camera/CameraActor.h"
+#include "controllers/VehicleCameraBase.hpp"
+#include "common/common_utils/Utils.hpp"
 #include "PIPCamera.generated.h"
 
-
-UENUM(BlueprintType, meta=(Bitflags))
-enum class EPIPCameraType : uint8
-{
-    PIP_CAMERA_TYPE_NONE = 0	UMETA(DisplayName="None"),
-    PIP_CAMERA_TYPE_SCENE = 1	UMETA(DisplayName="Scene"),
-    PIP_CAMERA_TYPE_DEPTH = 2	UMETA(DisplayName="Depth"),
-    PIP_CAMERA_TYPE_SEG = 4 	UMETA(DisplayName="Segmentation"),
-    PIP_CAMERA_TYPE_ALL = 127     UMETA(DisplayName="All")
-};
-ENUM_CLASS_FLAGS(EPIPCameraType)
-
-UENUM(BlueprintType)
-enum class EPIPCameraMode : uint8
-{
-    PIP_CAMERA_MODE_NONE = 0	UMETA(DisplayName="None"),
-    PIP_CAMERA_MODE_MAIN = 1	UMETA(DisplayName="Main"),
-    PIP_CAMERA_MODE_PIP = 2	UMETA(DisplayName="PIP")
-};
 
 UCLASS()
 class AIRSIM_API APIPCamera : public ACameraActor
 {
     GENERATED_BODY()
     
-    
 public:
-    static constexpr EPIPCameraType DefaultEnabledCameras = EPIPCameraType::PIP_CAMERA_TYPE_ALL;
-    static constexpr EPIPCameraMode DefaultCameraMode = EPIPCameraMode::PIP_CAMERA_MODE_NONE;
+    struct CaptureSettings {
+        //below settinsg are obtained by using Unreal console command (press ~):
+        // ShowFlag.VisualizeHDR 1.
+        //to replicate camera settings to SceneCapture2D, except motion blur
+        typedef msr::airlib::Utils Utils;
+        static constexpr float kSceneTargetGamma = Utils::nan<float>(); //1.0f;
 
-    APIPCamera();
+        unsigned int width = 256, height = 144; //960 X 540
+        float fov_degrees = Utils::nan<float>(); //90.0f
+        float auto_exposure_speed = Utils::nan<float>(); // 100.0f;
+        float auto_exposure_bias = Utils::nan<float>(); // 0;
+        float auto_exposure_max_brightness = Utils::nan<float>(); // 0.64f;
+        float auto_exposure_min_brightness = Utils::nan<float>(); // 0.03f;
+        float auto_exposure_low_percent = Utils::nan<float>(); // 80.0f;
+        float auto_exposure_high_percent = Utils::nan<float>(); // 98.3f;
+        float auto_exposure_histogram_log_min = Utils::nan<float>(); // -8;
+        float auto_exposure_histogram_log_max = Utils::nan<float>(); // 4;
+        float motion_blur_amount = 0;
+        float target_gamma = Utils::nan<float>(); //1.0f; //should be defaulted to kSceneTargetGamma for scene
+    };
+
+
+public:
+    typedef msr::airlib::VehicleCameraBase::ImageType ImageType;
+    typedef msr::airlib::VehicleCameraBase::ImageType_ ImageType_;
+
+
+    const ImageType DefaultEnabledCameras = ImageType_::None;
+
     virtual void PostInitializeComponents() override;
+    virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-    UFUNCTION(BlueprintCallable, Category = "Switching")
-    void setToMainView();
-    UFUNCTION(BlueprintCallable, Category = "Switching")
-    void setToPIPView();
-    UFUNCTION(BlueprintCallable, Category = "Switching")
+    void showToScreen();
     void disableAll();
+    void disableAllPIP();
+    void disableMain();
 
-    UFUNCTION(BlueprintCallable, Category = "Cameras")
-    EPIPCameraType toggleEnableCameraTypes(EPIPCameraType types);
-    UFUNCTION(BlueprintCallable, Category = "Cameras")
-    void setEnableCameraTypes(EPIPCameraType types);
-    UFUNCTION(BlueprintCallable, Category = "Cameras")
-    EPIPCameraType getEnableCameraTypes();
-    UFUNCTION(BlueprintCallable, Category = "Cameras")
-    EPIPCameraMode getCameraMode();
+    ImageType toggleEnableCameraTypes(ImageType types);
+    void setEnableCameraTypes(ImageType types);
+    ImageType getEnableCameraTypes();
 
-    bool getScreenshot(EPIPCameraType camera_type, TArray<uint8>& compressedPng, float& width, float& height);
-    void saveScreenshot(EPIPCameraType camera_type, FString fileSavePathPrefix, int fileSuffix);
+    USceneCaptureComponent2D* getCaptureComponent(const ImageType type, bool if_active);
+    UTextureRenderTarget2D* getRenderTarget(const ImageType type, bool if_active);
 
-	USceneCaptureComponent2D* getCaptureComponent(const EPIPCameraType type, bool if_active);
-	bool bReadPixelsStarted = false;
-	FRenderCommandFence ReadPixelFence;
-	TArray<FColor> bmp;
-
+    CaptureSettings getCaptureSettings(ImageType_ type);
+    void setCaptureSettings(ImageType_ type, const CaptureSettings& settings);
+    
 private:
-    UPROPERTY() USceneCaptureComponent2D* scene_capture_;
+    UPROPERTY() USceneCaptureComponent2D* screen_capture_;
     UPROPERTY() USceneCaptureComponent2D* depth_capture_;
     UPROPERTY() USceneCaptureComponent2D* seg_capture_;
     UPROPERTY() UCameraComponent*  camera_;
     UPROPERTY() UTextureRenderTarget2D* scene_render_target_;
-	UPROPERTY() UTextureRenderTarget2D* scene_render_target_2_;
     UPROPERTY() UTextureRenderTarget2D* depth_render_target_;
     UPROPERTY() UTextureRenderTarget2D* seg_render_target_;
 
-    //UPROPERTY(BlueprintReadWrite, Category = "Cameras")
-    EPIPCameraMode camera_mode_ = DefaultCameraMode;   
+    ImageType enabled_camera_types_ = DefaultEnabledCameras;
 
-    //UPROPERTY(BlueprintReadWrite, Category = "Cameras", meta = (Bitmask, BitmaskEnum = "EPIPCameraType"))
-    EPIPCameraType enabled_camera_types_ = DefaultEnabledCameras;
+    CaptureSettings scene_capture_settings_, seg_capture_settings_, depth_capture_settings_;
 
 private:
-    void activateCaptureComponent(const EPIPCameraType type);
-    void deactivateCaptureComponent(const EPIPCameraType type);
-    void deactivateMain();
-    void deactivatePIP();
-    void refreshCurrentMode();
-    UTextureRenderTarget2D* getTexureRenderTarget(const EPIPCameraType type, bool if_active);
-	void ReadPixelsNonBlocking(USceneCaptureComponent2D*, TArray<FColor>);
-
-	FGraphEventRef RenderStatus;
-	FGraphEventRef CompletionStatus;
+    void enableCaptureComponent(const ImageType type, bool is_enabled);
+    static void updateCaptureComponentSettings(USceneCaptureComponent2D* capture, UTextureRenderTarget2D* render_target, const CaptureSettings& settings);
 };

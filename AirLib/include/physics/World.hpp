@@ -10,6 +10,7 @@
 #include "PhysicsEngineBase.hpp"
 #include "PhysicsBody.hpp"
 #include "common/common_utils/ScheduledExecutor.hpp"
+//#include "common/DebugClock.hpp"
 
 namespace msr { namespace airlib {
 
@@ -27,11 +28,12 @@ public:
     {
         World::clear();
 
-        if (physics_engine) {
-            physics_engine_ = physics_engine;
+        //clock_ = std::make_shared<msr::airlib::DebugClock>(3E-3f);
+        //msr::airlib::ClockFactory::get(clock_);
+
+        physics_engine_ = physics_engine;
+        if (physics_engine)
             physics_engine_->clear();
-        }
-        World::reset();
     }
 
     //override updatable interface so we can synchronize physics engine
@@ -44,14 +46,17 @@ public:
             physics_engine_->reset();
     }
 
-    virtual void update(real_T dt) override
+    virtual void update() override
     {
+        //if (clock_)
+        //    clock_->step();
+
         //first update our objects
-        UpdatableContainer::update(dt);
+        UpdatableContainer::update();
 
         //now update kinematics state
         if (physics_engine_)
-            physics_engine_->update(dt);
+            physics_engine_->update();
     }
 
     virtual void reportState(StateReporter& reporter) override
@@ -90,7 +95,7 @@ public:
     }
 
     //async updater thread
-    void startAsyncUpdator(real_T period)
+    void startAsyncUpdator(long long period)
     {
         executor_.initialize(std::bind(&World::worldUpdatorAsync, this, std::placeholders::_1), period);
         executor_.start();
@@ -109,23 +114,26 @@ public:
     }
 
 private:
-    bool worldUpdatorAsync(double dt)
+    bool worldUpdatorAsync(long long dt_nanos)
     {
         try {
-            update(static_cast<real_T>(dt));
+            update();
         }
         catch(const std::exception& ex) {
-            Utils::logError("Exception occurred while updating world: %s", ex.what());
+            Utils::DebugBreak();
+            Utils::log(Utils::stringf("Exception occurred while updating world: %s", ex.what()), Utils::kLogLevelError);
         }
         catch(...) {
-            Utils::logError("Exception occurred while updating world");
+            Utils::DebugBreak();
+            Utils::log("Exception occurred while updating world", Utils::kLogLevelError);
         }
+
         return true;
     }
 
 private:
     PhysicsEngineBase* physics_engine_ = nullptr;
-
+    //std::shared_ptr<msr::airlib::DebugClock> clock_;
     common_utils::ScheduledExecutor executor_;
 };
 

@@ -1,8 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "AirSim.h"
 #include "AirBlueprintLib.h"
+#include "GameFramework/WorldSettings.h"
+#include "Engine/Engine.h"
+#include "Components/SceneCaptureComponent2D.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/RotatingMovementComponent.h"
 #include <exception>
 #include "common/common_utils/Utils.hpp"
 
@@ -16,6 +20,8 @@ parameters -> camel_case
 
 typedef common_utils::Utils Utils;
 
+bool UAirBlueprintLib::log_messages_hidden = false;
+
 void UAirBlueprintLib::LogMessageString(const std::string &prefix, const std::string &suffix, LogDebugLevel level, float persist_sec)
 {
     LogMessage(FString(prefix.c_str()), FString(suffix.c_str()), level, persist_sec);
@@ -23,8 +29,12 @@ void UAirBlueprintLib::LogMessageString(const std::string &prefix, const std::st
 
 void UAirBlueprintLib::LogMessage(const FString &prefix, const FString &suffix, LogDebugLevel level, float persist_sec)
 {
+    if (log_messages_hidden)
+        return;
+
     static TMap<FString, int> loggingKeys;
     static int counter = 1;
+
     int key = loggingKeys.FindOrAdd(prefix);
     if (key == 0) {
         key = counter++;
@@ -33,7 +43,7 @@ void UAirBlueprintLib::LogMessage(const FString &prefix, const FString &suffix, 
 
     FColor color;
     switch (level) {
-    case LogDebugLevel::Informational: color = FColor(100, 100, 250); break;
+    case LogDebugLevel::Informational: color = FColor(5, 5, 100);; break;
     case LogDebugLevel::Success: color = FColor::Green; break;
     case LogDebugLevel::Failure: color = FColor::Red; break;
     case LogDebugLevel::Unimportant: color = FColor::Silver; break;
@@ -175,7 +185,7 @@ void UAirBlueprintLib::FollowActor(AActor* follower, const AActor* followee, con
 template<class UserClass>
 FInputActionBinding& UAirBlueprintLib::BindActionToKey(const FName action_name, const FKey in_key, UserClass* actor, 
     typename FInputActionHandlerSignature::TUObjectMethodDelegate<UserClass>::FMethodPtr func,
-	bool shift_key, bool control_key, bool alt_key, bool command_key)
+    bool shift_key, bool control_key, bool alt_key, bool command_key)
 {
     FInputActionKeyMapping action(action_name, in_key, shift_key, control_key, alt_key, command_key);
     
@@ -188,14 +198,61 @@ FInputActionBinding& UAirBlueprintLib::BindActionToKey(const FName action_name, 
 
 
 template<class UserClass>
-FInputAxisBinding& UAirBlueprintLib::BindAxisToKey(const FName axis_name, const FKey in_key, UserClass* actor, 
+FInputAxisBinding& UAirBlueprintLib::BindAxisToKey(const FName axis_name, const FKey in_key, AActor* actor, UserClass* obj, 
     typename FInputAxisHandlerSignature::TUObjectMethodDelegate<UserClass>::FMethodPtr func)
 {
     FInputAxisKeyMapping axis(axis_name, in_key);
 
+    return UAirBlueprintLib::BindAxisToKey(axis, actor, obj, func);
+}
+
+template<class UserClass>
+FInputAxisBinding& UAirBlueprintLib::BindAxisToKey(const FInputAxisKeyMapping& axis, AActor* actor, UserClass* obj,
+    typename FInputAxisHandlerSignature::TUObjectMethodDelegate<UserClass>::FMethodPtr func)
+{
     APlayerController* controller = actor->GetWorld()->GetFirstPlayerController();
 
     controller->PlayerInput->AddAxisMapping(axis);
     return controller->InputComponent->
-        BindAxis(axis_name, actor, func);
+        BindAxis(axis.AxisName, obj, func);
+}
+
+
+int UAirBlueprintLib::RemoveAxisBinding(const FInputAxisKeyMapping& axis, FInputAxisBinding* axis_binding, AActor* actor)
+{
+    if (axis_binding != nullptr && actor != nullptr) {
+        APlayerController* controller = actor->GetWorld()->GetFirstPlayerController();
+        
+        //remove mapping
+        int found_mapping_index = -1, cur_mapping_index = -1;
+        for (const auto& axis_arr : controller->PlayerInput->AxisMappings) {
+            ++cur_mapping_index;
+            if (axis_arr.AxisName == axis.AxisName && axis_arr.Key == axis.Key) {
+                found_mapping_index = cur_mapping_index;
+                break;
+            }
+        }
+        if (found_mapping_index >= 0)
+            controller->PlayerInput->AxisMappings.RemoveAt(found_mapping_index);
+
+        //removing binding
+        int found_binding_index = -1, cur_binding_index = -1;
+        for (const auto& axis_arr : controller->InputComponent->AxisBindings) {
+            ++cur_binding_index;
+            if (axis_arr.AxisName == axis_binding->AxisName) {
+                found_binding_index = cur_binding_index;
+                break;
+            }
+        }
+        if (found_binding_index >= 0)
+            controller->InputComponent->AxisBindings.RemoveAt(found_binding_index);
+        
+        return found_binding_index;
+    }
+    else return -1;
+}
+
+void UAirBlueprintLib::EnableInput(AActor* actor)
+{
+    actor->EnableInput(actor->GetWorld()->GetFirstPlayerController());
 }

@@ -11,7 +11,7 @@
 namespace msr { namespace airlib {
 
 /*
-    This class defined the interface for vehicle controllers. A typical vehicle controller would consume
+    This class defines the interface for vehicle controllers. A typical vehicle controller would consume
     sensor values as inputs and return control signals for various vertices on physics body as output. The update()
     method should be used to process the sensor inputs from vehicle as needed (the implementor should have vehicle object
     possibly through initialization). The getVertexControlSignal() is called to retrieve the value of control signal to be applied
@@ -20,16 +20,13 @@ namespace msr { namespace airlib {
 */
 class ControllerBase : public UpdatableObject {
 public:
-    //reset any state in the controller
-	virtual void reset() override = 0;
-	virtual void update(real_T dt) override = 0;
-
     //return 0 to 1 (corresponds to zero to full thrust)
-	virtual real_T getVertexControlSignal(unsigned int rotor_index) = 0;
+    virtual real_T getVertexControlSignal(unsigned int rotor_index) = 0;
     virtual size_t getVertexCount() = 0;
     
     virtual void getStatusMessages(std::vector<std::string>& messages)
     {
+        unused(messages);
         //default implementation
     }
 
@@ -46,6 +43,7 @@ public:
 
     virtual void reportTelemetry(float renderTime)
     {
+        unused(renderTime);
         //no default action
     }
 

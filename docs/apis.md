@@ -1,8 +1,9 @@
 ## Introduction
-This project includes a self-contained cross-platform library to retrieve data from the quadrotor and send the control commands. You can use this library for a simulated drone in Unreal engine or on a real quadrotor such as a MavLink based vehicle platform (and very soon DJI quadrotors such as Matrice).
+AirSim offers APIs to interact with vehicles. You can use these APIs to retrieve images, get state, command the vehicle and so on. The APIs use [msgpack-rpc protocol](https://github.com/msgpack-rpc/msgpack-rpc) which has bindings available in variety of languages including C++, C#, Python, Java etc.
 
 ## Hello Drone
-Here's the taste of how you can use our APIs:
+Here's very quick overview of how to use AirSim APIs using C++ (see also [Python doc](python.md)):
+See also  if you prefer that language.
 
 ```
 #include <iostream>
@@ -17,14 +18,14 @@ int main()
     client.armDisarm(true);
 
     cout << "Press Enter to takeoff" << endl; cin.get();
-    client.takeoff(1000);
+    client.takeoff(60);
 
     cout << "Press Enter to use offboard control" << endl; cin.get();
     client.requestControl();
 
     cout << "Press Enter to move 5 meters in x direction with 1 m/s velocity" << endl; cin.get();    
     auto position = client.getPosition(); // from current location
-    client.moveToPosition(position.x() + 5, position.y(), position.z(), 1);
+    client.moveToPosition(position.x() + 5, position.y(), position.z(), 1, 5*1);
 
     cout << "Press Enter to land" << endl; cin.get();
     client.land();
@@ -34,37 +35,29 @@ int main()
 
 ```
 
-You can find a ready to run project in HelloDrone folder in the repository.
+You can find a ready to run project in HelloDrone folder in the repository. Read more about [Hello Drone](hello_drone.md).
 
-## How does Hello Drone work?
-Hello Drone uses the RPC client to connect to the RPC server that is automatically started by the AirSim. 
-The RPC server routes all the commands to a class that implements [DroneControlBase](https://github.com/Microsoft/AirSim/blob/master/AirLib/include/controllers/DroneControllerBase.hpp). 
-In essence, DroneControlBase defines our abstract interface for getting data from the quadrotor and sending back commands. 
-We currently have concrete implementation for DroneControlBase for MavLink based vehicles. The implementation for DJI drone 
-platforms, specifically Matrice, is in works.
+## Image / Computer Vision and Collision APIs
+AirSim offers comprehensive images APIs to retrieve synchronized images from multiple cameras along with ground truth including depth and vision. You can set the resolution, FOV, motion blur etc parameters in [settings.json](settings.md). There is also API for detecting collison state. In addition, AirSim also includes complete examples of how to generate stereo images along with ground truth depth images.
 
-## How to get images from drone?
-Here's a sample code. For more information, please see [DroneControlBase](https://github.com/Microsoft/AirSim/blob/master/AirLib/include/controllers/DroneControllerBase.hpp) class.
+More on [image APIs](image_apis.md).
 
-```
-int playWithImages() 
-{
-    using namespace std;
-    using namespace msr::airlib;
-    
-    msr::airlib::RpcLibClient client;
+## Note on Timing Related Parameters
 
-    client.setImageTypeForCamera(0, DroneControlBase::ImageType::Depth);
-    vector<uint8_t> image = client.getImageForCamera(0, DroneControlBase::ImageType::Depth);
-    //do something with images
-}
-```
+Many API methods has parameters named `float duration` or: `float max_wait_seconds`.
 
-## Can I run above code on real quadrotors as well?
-Absolutely! The AirLib is self-contained library that you can put on an offboard computing module such as the Gigabyte barebone Mini PC. 
-This module then can talk to the flight controllers such as Pixhawk using exact same code and MavLink protocol (or DJI protocol). 
-The code you write for testing in the simulator remains unchanged! We will post more detailed guide on how to do this soon.
+Methods that take `float duration`, like `moveByVelocit`y return control immediately. So you can therefore choose to sleep for this duration, or you can change their mind and call something else which will automatically cancel the `moveByVelocity`.
 
-## What else is in works?
-We are working on enabling other RPC stack such as ZeroMQ over protobufs so we can enable more languages such as Python. 
-We also hope to release ROS adapters for our APIs with Linux builds.
+Methods that take `float max_wait_seconds`, like `takeoff`, `land`, `moveOnPath`, `moveToPosition`, `moveToZ`, and so will block this amount of time waiting for command to be successfully completed. If the command completes before the max_wait_seconds they will return True, otherwise
+if the `max_wait_seconds` times out they will return `false`.  If you want to wait for ever pass a big number. But if you want to be able to interrupt even these commands pass 0 and you can do something else or sleep in a loop while checking the drone position, etc. We would not recommend interrupting takeoff/land on a real drone, of course, as the results may be unpredictable.
+
+## Using APIs on Real Vehicles
+We want to be able to run *same code* that runs in simulation as on real vehicle. The AirLib is self-contained library that you can put on an offboard computing module such as the Gigabyte barebone Mini PC. This module then can talk to the flight controllers such as Pixhawk using exact same code and MavLink protocol (or DJI protocol). The code you write for testing in the simulator remains unchanged! 
+See [AirLib on custom drones](https://github.com/Microsoft/AirSim/blob/master/docs/custom_drone.md).
+
+## References and Examples
+
+* AirSim APIs using [Python](python.md)
+* [move on path](https://github.com/Microsoft/AirSim/wiki/moveOnPath-demo) demo showing video of fast flight through Modular Neighborhood environment
+* [building a hexacopter](https://github.com/Microsoft/AirSim/wiki/hexacopter)
+* [building point clouds](https://github.com/Microsoft/AirSim/wiki/Point-Clouds)

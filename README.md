@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Welcome to AirSim
 
 AirSim is a simulator for drones (and soon other vehicles) built on Unreal Engine. It is open-source, cross platform and supports hardware-in-loop 
@@ -28,9 +29,8 @@ There are two ways to get AirSim working on your machine. Click on below links a
 2.  [Use the precompiled binaries](docs/use_precompiled.md)
 
 ## Linux
-Good news! Several people have reported that they have been running in Linux as well as OSX successfully. Please check [conversations on Linux](https://github.com/microsoft/airsim/issues?utf8=%E2%9C%93&q=linux). 
-You can find our experimental [Linux build instruction here](docs/linux_build.md). We are still in process of making this little bit nicer and release official Linux build soon! 
-AirSim code is designed to be cross platform and we would love to make AirSim available on other platforms as well. 
+[Build AirSim on Ubuntu 16.04](docs/linux_build.md)
+
 
 # How to Use It
 
@@ -55,10 +55,11 @@ This will start writing pose and images for each frame.
 If you would like more data logging capabilities and other features, [file a feature request](https://github.com/Microsoft/AirSim/issues) or contribute changes. 
 The data logging code is pretty simple and you can modify it to your heart's desire.
 
-A more complex way to generate training data is by writing client code that uses our APIs. This allows you to be in full control of how, what, where and when 
-you want to log data. See the next section for more details.
+A more complex way to generate training data is by writing client code that uses our APIs. This allows you to be in full control of how, what, where and when you want to log data. See the next section for more details.
 
 For MavLink enabled drones, you can also use our [Log Viewer](docs/log_viewer.md) to visualize the streams of data.
+
+You can also [playback recorded logs](docs/playback.md) for side-by-side comparison between real drone and the simulator.
 
 ## Programmatic control
 The AirSim exposes easy to use APIs in order to retrieve data from the drones that includes ground truth, sensor data as well as various images. It also exposes 
@@ -66,20 +67,21 @@ APIs to control the drones in a platform independent way. This allows you to use
 without making changes as well as without having to learn internal protocols details. 
 
 These APIs are also available as a part of a separate independent cross-platform library so you can deploy them on an offboard computer on your vehicle. 
-This way you can write and test your code in simulator and later execute it on the real drones. Transfer learning and related research is one of our focus areas.
+This way you can write and test your code in simulator and later execute it on the real drones. Transfer learning and related research is one of our focus areas.  See [custom drones](docs/custom_drone.md).
 
 [More details](docs/apis.md)
 
 # Participate
 ## Paper
-You can get additional technical details in [our paper (work in progress)](https://www.microsoft.com/en-us/research/wp-content/uploads/2017/02/aerial-informatics-robotics-TR.pdf). Please cite this as:
+You can get additional technical details in [our paper (preprint)](https://arxiv.org/abs/1705.05065). Please cite this as:
 ```
-@techreport{MSR-TR-2017-9,
-     title = {{A}erial {I}nformatics and {R}obotics Platform},
-     author = {Shital Shah and Debadeepta Dey and Chris Lovett and Ashish Kapoor},
-     year = {2017},
-     institution = {Microsoft Research},
-     number = {{M}{S}{R}-{T}{R}-2017-9}}
+@inproceedings{airsim2017fsr,
+  author = {Shital Shah and Debadeepta Dey and Chris Lovett and Ashish Kapoor},
+  title = {AirSim: High-Fidelity Visual and Physical Simulation for Autonomous Vehicles},
+  year = {2017},
+  booktitle = {Field and Service Robotics},
+  eprint = {arXiv:1705.05065},
+  url = {https://arxiv.org/abs/1705.05065}
 }
 ```
 
@@ -99,3 +101,7 @@ If you run into problems, check the [FAQ](docs/faq.md) and feel free to post iss
 
 ## License
 This project is released under MIT License. Please review [License file](LICENSE) for more details.
+=======
+# AirSim
+AirSim with multiple vehicules enabled
+>>>>>>> ac96e80b1177539b7f082d18a68e4ac5e791ce9d

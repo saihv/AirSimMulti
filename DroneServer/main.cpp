@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <string>
-#include "rpc/RpcLibServer.hpp"
+#include "api/RpcLibServer.hpp"
 #include "controllers/MavLinkDroneController.hpp"
 #include "controllers/Settings.hpp"
 
@@ -30,26 +30,26 @@ int main(int argc, const char* argv[])
         std::cout << "WARNING: This is not simulation!" << std::endl;
 
     MavLinkDroneController::ConnectionInfo connection_info;
-    connection_info.vehicle_name = "Pixhawk";
     
     // read settings and override defaults
     Settings& settings = Settings::singleton().loadJSonFile("settings.json");
     Settings child;
     if (settings.isLoadSuccess()) {
-        settings.getChild(connection_info.vehicle_name, child);
+        settings.getChild("Pixhawk", child);
 
         // allow json overrides on a per-vehicle basis.
-        connection_info.sim_sysid = static_cast<msr::airlib::uint8_t>(child.getInt("SimSysID", connection_info.sim_sysid));
+        connection_info.sim_sysid = static_cast<uint8_t>(child.getInt("SimSysID", connection_info.sim_sysid));
         connection_info.sim_compid = child.getInt("SimCompID", connection_info.sim_compid);
 
-        connection_info.vehicle_sysid = static_cast<msr::airlib::uint8_t>(child.getInt("VehicleSysID", connection_info.vehicle_sysid));
+        connection_info.vehicle_sysid = static_cast<uint8_t>(child.getInt("VehicleSysID", connection_info.vehicle_sysid));
         connection_info.vehicle_compid = child.getInt("VehicleCompID", connection_info.vehicle_compid);
 
-        connection_info.offboard_sysid = static_cast<msr::airlib::uint8_t>(child.getInt("OffboardSysID", connection_info.offboard_sysid));
+        connection_info.offboard_sysid = static_cast<uint8_t>(child.getInt("OffboardSysID", connection_info.offboard_sysid));
         connection_info.offboard_compid = child.getInt("OffboardCompID", connection_info.offboard_compid);
 
         connection_info.logviewer_ip_address = child.getString("LogViewerHostIp", connection_info.logviewer_ip_address);
         connection_info.logviewer_ip_port = child.getInt("LogViewerPort", connection_info.logviewer_ip_port);
+        connection_info.logviewer_ip_sport = child.getInt("LogViewerSendPort", connection_info.logviewer_ip_sport);
 
         connection_info.qgc_ip_address = child.getString("QgcHostIp", connection_info.qgc_ip_address);
         connection_info.qgc_ip_port = child.getInt("QgcPort", connection_info.qgc_ip_port);
@@ -74,14 +74,11 @@ int main(int argc, const char* argv[])
 
     MavLinkDroneController mav_drone;
     mav_drone.initialize(connection_info, nullptr, is_simulation);
+    mav_drone.reset();
     mav_drone.start();
 
     DroneControllerCancelable server_wrapper(&mav_drone);
     msr::airlib::RpcLibServer server(&server_wrapper, connection_info.local_host_ip);
-    
-    auto v = std::vector<msr::airlib::uint8_t>{ 5, 4, 3 };
-    server_wrapper.setImageForCamera(3, DroneControllerBase::ImageType::Depth, v);
-    server_wrapper.setImageForCamera(4, DroneControllerBase::ImageType::Scene, std::vector<msr::airlib::uint8_t>{6, 5, 4, 3, 2});
     
     //start server in async mode
     server.start(false);
@@ -97,10 +94,12 @@ int main(int argc, const char* argv[])
             for (const auto& message : messages) {
                 std::cout << message << std::endl;
             }
-        }
+        }        
 
         constexpr static std::chrono::milliseconds MessageCheckDurationMillis(100);
         std::this_thread::sleep_for(MessageCheckDurationMillis);
+
+        mav_drone.reportTelemetry(100);
     }
 
     return 0;

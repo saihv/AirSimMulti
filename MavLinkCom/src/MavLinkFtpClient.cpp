@@ -7,10 +7,10 @@
 using namespace mavlinkcom;
 using namespace mavlinkcom_impl;
 
-MavLinkFtpClient::MavLinkFtpClient(int system_id, int component_id)
-	: MavLinkNode(system_id, component_id)
+MavLinkFtpClient::MavLinkFtpClient(int localSystemId, int localComponentId)
+	: MavLinkNode(localSystemId, localComponentId)
 {
-	pImpl.reset(new MavLinkFtpClientImpl(system_id, component_id));
+	pImpl.reset(new MavLinkFtpClientImpl(localSystemId, localComponentId));
 }
 
 MavLinkFtpClient::~MavLinkFtpClient()
@@ -50,4 +50,16 @@ void MavLinkFtpClient::remove(MavLinkFtpProgress& progress, const std::string& r
 {
 	auto ptr = dynamic_cast<MavLinkFtpClientImpl*>(pImpl.get());
 	ptr->remove(progress, remotePath);
+}
+
+void MavLinkFtpClient::mkdir(MavLinkFtpProgress& progress, const std::string& remotePath)
+{
+    auto ptr = dynamic_cast<MavLinkFtpClientImpl*>(pImpl.get());
+    ptr->mkdir(progress, remotePath);
+}
+
+void MavLinkFtpClient::rmdir(MavLinkFtpProgress& progress, const std::string& remotePath)
+{
+    auto ptr = dynamic_cast<MavLinkFtpClientImpl*>(pImpl.get());
+    ptr->rmdir(progress, remotePath);
 }

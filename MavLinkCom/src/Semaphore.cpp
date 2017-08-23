@@ -1,17 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-// this is done this way so we can hide the boost dependency from our public SDK headers.
 #include "Semaphore.hpp"
 #include "Utils.hpp"
 
 using namespace mavlink_utils;
-
-#ifdef __APPLE__
-#include <signal.h> //SIGALRM
-
-
-#endif
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -74,7 +67,8 @@ public:
 };
 
 #elif defined(__APPLE__)
-
+#include <signal.h> //SIGALRM
+#include <semaphore.h>
 #include <mach/mach.h>
 #include <mach/task.h>
 #include <mach/semaphore.h>

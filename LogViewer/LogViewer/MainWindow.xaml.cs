@@ -576,10 +576,12 @@ namespace LogViewer
                 CsvDataLog log = new CsvDataLog();
                 await log.Load(file, progress);
 
-                FlightView.ItemsSource = new List<Flight>();
-                logs.Add(log);
-
-                ShowSchema();
+                UiDispatcher.RunOnUIThread(() =>
+                {
+                    FlightView.ItemsSource = new List<Flight>();
+                    logs.Add(log);
+                    ShowSchema();
+                });
 
             }
             catch (Exception ex)
@@ -600,9 +602,17 @@ namespace LogViewer
                 {
                     schema = currentFlightLog.Schema;
                 }
-                else if (this.logs.Count > 0)
+                foreach (var log in this.logs)
                 {
-                    schema = this.logs[0].Schema;
+                    var s = log.Schema;
+                    if (schema == null)
+                    {
+                        schema = s;
+                    }
+                    else
+                    {
+                        schema.Combine(s);
+                    }
                 }
                 if (schema == null || schema.ChildItems == null || schema.ChildItems.Count == 0)
                 {
@@ -610,7 +620,6 @@ namespace LogViewer
                 }
                 else 
                 {
-                    // todo: compute combined schema for selected logs, but for now just show the first one.
                     List<LogItemSchema> list = new List<Model.LogItemSchema>(schema.ChildItems);
                     list.Sort((a, b) => { return string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase); });
                     CategoryList.ItemsSource = list;
@@ -731,6 +740,28 @@ namespace LogViewer
             }
         }
 
+        List<LogEntryGPS> mapData = null;
+
+        Pushpin GetOrCreateMapMarker(Location loc)
+        {
+            Pushpin mapMarker = null;
+            foreach (var child in myMap.Children)
+            {
+                if (child is Pushpin)
+                {
+                    mapMarker = (Pushpin)child;
+                    break;
+                }
+            }
+            if (mapMarker == null)
+            {
+                mapMarker = new Pushpin();
+                myMap.Children.Add(mapMarker);
+            }
+            mapMarker.Location = loc;
+            return mapMarker;
+        }
+
         void ShowMap()
         {
             myMap.Children.Clear();
@@ -741,6 +772,7 @@ namespace LogViewer
                 // show everything.
                 selected.Add(new Flight() { StartTime = DateTime.MinValue, Duration = TimeSpan.MaxValue });
             }
+            mapData = new List<Utilities.LogEntryGPS>();
             var glitchIcon = XamlExtensions.LoadImageResource("Assets.GpsGlitchIcon.png");
             var imageLayer = new MapLayer();
             myMap.Children.Add(imageLayer);
@@ -755,17 +787,19 @@ namespace LogViewer
                         if (flight.Log == null || flight.Log == log)
                         {
                             MapPolyline line = new MapPolyline();
+                            line.StrokeLineJoin = PenLineJoin.Round;
                             line.StrokeThickness = 4;
                             line.Stroke = new SolidColorBrush(GetRandomColor());
                             LocationCollection points = new LocationCollection();
 
-                            Debug.WriteLine("time,\t\tlat,\t\tlong,\t\t\tnsat,\talt,\thdop,\tfix");
+                            //Debug.WriteLine("time,\t\tlat,\t\tlong,\t\t\tnsat,\talt,\thdop,\tfix");
                             foreach (var row in log.GetRows("GPS", flight.StartTime, flight.Duration))
                             {
                                 LogEntryGPS gps = new LogEntryGPS(row);
-                                Debug.WriteLine("{0},\t{1},\t{2},\t{3},\t\t{4:F2},\t{5},\t{6}", gps.GPSTime,  gps.Lat, gps.Lon, gps.nSat, gps.Alt, gps.EPH, gps.Fix);
+                                //Debug.WriteLine("{0},\t{1},\t{2},\t{3},\t\t{4:F2},\t{5},\t{6}", gps.GPSTime,  gps.Lat, gps.Lon, gps.nSat, gps.Alt, gps.EPH, gps.Fix);
                                 if (!(Math.Floor(gps.Lat) == 0 && Math.Floor(gps.Lon) == 0))
                                 {
+                                    mapData.Add(gps);
                                     var pos = new Location() { Altitude = gps.Alt, Latitude = gps.Lat, Longitude = gps.Lon };
                                     points.Add(pos);
                                     ulong time = (ulong)gps.GPSTime;
@@ -776,7 +810,7 @@ namespace LogViewer
                                             if (!gpsIsBad)
                                             {
                                                 gpsIsBad = true;
-                                                Debug.WriteLine("{0},\t{1},\t{2},\t{3},\t\t{4:F2},\t{5},\t{6}", gps.GPSTime, gps.Lat, gps.Lon, gps.nSat, gps.Alt, gps.EPH, gps.Fix);
+                                                //Debug.WriteLine("{0},\t{1},\t{2},\t{3},\t\t{4:F2},\t{5},\t{6}", gps.GPSTime, gps.Lat, gps.Lon, gps.nSat, gps.Alt, gps.EPH, gps.Fix);
                                                 Image img = new Image();
                                                 img.Width = 30;
                                                 img.Height = 30;
@@ -890,6 +924,8 @@ namespace LogViewer
             SimpleLineChart chart = new SimpleLineChart();
             chart.ChartGenerated += OnNewChartGenerated;
             chart.ClearAllAdornments += OnClearAllAdornments;
+            chart.DisplayMessage += OnShowMessage;
+            chart.PointerMoved += OnPointerMoved;
             chart.Margin = defaultChartMargin;
             chart.Focusable = false;
             chart.Closed += OnChartClosed;
@@ -916,6 +952,38 @@ namespace LogViewer
             return chart;
         }
 
+        private void OnPointerMoved(object sender, DataValue data)
+        {
+            if (data != null && mapData != null && myMap.Visibility == Visibility.Visible)
+            {
+                double time = data.X;
+                double dist = double.MaxValue; 
+                int closest = 0;
+                int i = 0;
+                LogEntryGPS gps = null;
+                // find matching gps location in time.
+                foreach (var item in mapData)
+                {
+                    double t = item.Timestamp;
+                    double d = Math.Abs((double)(t - time));
+                    if (dist == ulong.MaxValue || d < dist)
+                    {
+                        gps = item;
+                        dist = d;
+                        closest = i;
+                    }
+                    i++;
+                }
+                GetOrCreateMapMarker(new Location(gps.Lat, gps.Lon, gps.Alt));
+            }
+        }
+
+        private void OnShowMessage(object sender, string message)
+        {
+            SystemConsole.Write(message);
+            ConsoleButton.IsChecked = true;
+            SystemConsole.Show();
+        }
 
         private void GraphItem(LogItemSchema schema)
         {
@@ -1028,6 +1096,7 @@ namespace LogViewer
         private void LayoutCharts()
         {
             // layout charts to fill the space available.
+            ChartStack.UpdateLayout();
             double height = ChartStack.ActualHeight;
             double count = ChartStack.ChartCount;
             height -= (count * (defaultChartMargin.Top + defaultChartMargin.Bottom)); // remove margins
@@ -1040,20 +1109,27 @@ namespace LogViewer
             }
 
             // give all the charts the same min/max on the X dimension so that the charts are in sync (even when they are not grouped).
-            ChartScaleInfo combined = new ChartScaleInfo();
-            foreach (SimpleLineChart chart in ChartStack.FindCharts())
-            {
-                var info = chart.ComputeScaleSelf(0);
-                combined.Combine(info);
-            }
+            //ChartScaleInfo combined = null;
+            //foreach (SimpleLineChart chart in ChartStack.FindCharts())
+            //{
+            //    var info = chart.ComputeScaleSelf();
+            //    if (combined == null)
+            //    {
+            //        combined = info;
+            //    }
+            //    else
+            //    {
+            //        combined.Combine(info);
+            //    }
+            //}
 
-            // now set the min/max on each chart.
-            foreach (SimpleLineChart chart in ChartStack.FindCharts())
-            {
-                chart.FixMinimumX = combined.minX;
-                chart.FixMaximumX = combined.maxX;
-                chart.InvalidateArrange();
-            }
+            //// now set the min/max on each chart.
+            //foreach (SimpleLineChart chart in ChartStack.FindCharts())
+            //{
+            //    chart.FixMinimumX = combined.minX;
+            //    chart.FixMaximumX = combined.maxX;
+            //    chart.InvalidateArrange();
+            //}
 
             if (!found)
             {
@@ -1363,6 +1439,107 @@ namespace LogViewer
         private void OnSettings(object sender, RoutedEventArgs e)
         {
             AppSettingsPanel.Visibility = Visibility.Visible;
+        }
+
+        private void OnMapTest(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog fo = new Microsoft.Win32.OpenFileDialog();
+            fo.Filter = "CSV Files (*.csv)|*.csv";
+            fo.CheckFileExists = true;
+            fo.Multiselect = false;
+            if (fo.ShowDialog() == true)
+            {
+                LoadMapData(fo.FileName);
+            }
+        }
+
+        private void LoadMapData(string fileName)
+        {
+            // turn data into two lookup tables for easy access.
+            double[,] xmag  = new double[180,360];
+            double[,] ymag = new double[180, 360];
+
+            using (StreamReader reader = new StreamReader(fileName))
+            {
+                string line = reader.ReadLine();
+                while (line != null)
+                {
+                    string[] parts = line.Split('\t');
+                    if (parts.Length == 5)
+                    {
+                        double lat, lon, x, y;
+                        if (double.TryParse(parts[0], out lat))
+                        {
+                            lon = double.Parse(parts[1]);
+                            x = double.Parse(parts[2]);
+                            y = double.Parse(parts[3]);
+                            lat += 90;
+                            lon += 180;
+                            xmag[(int)lat, (int)lon] = x;
+                            ymag[(int)lat, (int)lon] = y;
+                        }
+                    }
+
+                    line = reader.ReadLine();
+                }
+            }
+
+            DrawVectors(xmag, ymag);
+        }
+
+        class LocationComparer : IEqualityComparer<Location>
+        {
+            public bool Equals(Location x, Location y)
+            {
+                return x.Altitude == y.Altitude && x.Latitude == y.Latitude && x.Longitude == y.Longitude;
+            }
+
+            public int GetHashCode(Location obj)
+            {
+                return (int)(obj.Altitude + obj.Latitude + obj.Longitude);
+            }
+        }
+
+        private void DrawVectors(double[,] xmag, double[,] ymag)
+        {
+            // find guassian lines in the map and draw them so it looks like this:
+            // https://www.ngdc.noaa.gov/geomag/WMM/data/WMM2015/WMM2015_D_MERC.pdf
+
+
+            for (int i = 0; i < 180; i++)
+            {
+                for (int j = 0; j < 360; j++)
+                {
+                    double x = xmag[i, j];
+                    double y = ymag[i, j];
+
+                    double latitude = i - 90;
+                    double longitude = j - 180;
+
+                    MapPolyline line = new MapPolyline();
+                    line.StrokeThickness = 1;
+                    line.Stroke = new SolidColorBrush(Colors.Red);
+                    LocationCollection points = new LocationCollection();
+                    Location pos = new Location() { Altitude = 0, Latitude = latitude, Longitude = longitude };
+                    points.Add(pos);
+
+                    // ok, we have a winner, pick this one and continue.
+                    pos = new Location() { Latitude = latitude + (x*2), Longitude = longitude + (y*2) };
+                    points.Add(pos);
+                    line.Locations = points;
+                    myMap.Children.Add(line);
+                }
+            }
+        }
+
+        private void OnPaste(object sender, ExecutedRoutedEventArgs e)
+        {
+            if (Clipboard.ContainsImage())
+            {
+                var image = Clipboard.GetImage();
+                ImageViewer.Source = image;
+                CameraPanel.Visibility = Visibility.Visible;
+            }
         }
     }
 }

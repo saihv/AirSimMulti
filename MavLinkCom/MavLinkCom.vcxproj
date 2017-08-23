@@ -1,5 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ShowAllFiles>true</ShowAllFiles>
+  </PropertyGroup>
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -49,7 +52,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -110,7 +113,8 @@
     <PostBuildEvent>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>echo BOOST_ROOT=$(BOOST_ROOT)</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
     <Bscmake>
       <PreserveSbr>true</PreserveSbr>
@@ -130,7 +134,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x0600;_WIN32;WIN32;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WIN32;_WIN32_WINNT=0x0600;NOMINMAX;VC_EXTRALEAN;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <AdditionalIncludeDirectories>common_utils;include</AdditionalIncludeDirectories>
       <BrowseInformation>true</BrowseInformation>
@@ -144,12 +148,14 @@
     <PostBuildEvent>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>echo BOOST_ROOT=$(BOOST_ROOT)</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
     <Lib>
       <AdditionalLibraryDirectories>$(BOOST_ROOT)\stage\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>
       </AdditionalDependencies>
+      <AdditionalOptions>%(AdditionalOptions)  /machine:x64</AdditionalOptions>
     </Lib>
     <Bscmake>
       <PreserveSbr>true</PreserveSbr>
@@ -181,7 +187,8 @@
     <PostBuildEvent>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>echo BOOST_ROOT=$(BOOST_ROOT)</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
     <Lib>
       <AdditionalLibraryDirectories>$(BOOST_ROOT)\stage\lib</AdditionalLibraryDirectories>
@@ -200,7 +207,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x0600;_WIN32;WIN32;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WIN32;_WIN32_WINNT=0x0600;NOMINMAX;VC_EXTRALEAN;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_SCL_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <AdditionalIncludeDirectories>common_utils;include</AdditionalIncludeDirectories>
       <BrowseInformation>true</BrowseInformation>
@@ -216,7 +223,8 @@
     <PostBuildEvent>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>echo BOOST_ROOT=$(BOOST_ROOT)</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
     <Bscmake>
       <PreserveSbr>true</PreserveSbr>
@@ -225,6 +233,8 @@
       <AdditionalLibraryDirectories>$(BOOST_ROOT)\stage\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>
       </AdditionalDependencies>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
+      <AdditionalOptions>%(AdditionalOptions)  /machine:x64</AdditionalOptions>
     </Lib>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
@@ -233,7 +243,6 @@
   <ItemGroup>
     <ClCompile Include="common_utils\FileSystem.cpp" />
     <ClCompile Include="common_utils\ThreadUtils.cpp" />
-    <ClCompile Include="common_utils\Utils.cpp" />
     <ClCompile Include="src\impl\MavLinkFtpClientImpl.cpp" />
     <ClCompile Include="src\impl\MavLinkNodeImpl.cpp" />
     <ClCompile Include="src\impl\MavLinkTcpServerImpl.cpp" />

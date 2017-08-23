@@ -10,7 +10,7 @@
 class AsyncTasker {
 public:
     AsyncTasker(unsigned int thread_count = 4)
-        : threads_(thread_count), error_handler_([](std::exception e) {})
+        : threads_(thread_count), error_handler_([](std::exception e) {unused(e);})
     {
     }
 
@@ -22,28 +22,31 @@ public:
     {
         if (iterations < 1)
             return;
-        
+
         if (iterations == 1)
         {
             threads_.push([=](int i) {
+                unused(i);
                 try {
-					func();
+                    func();
                 }
                 catch (std::exception& e) {
                     error_handler_(e);
                 };
             });
-        } else {
+        }
+        else {
             threads_.push([=](int i) {
-                for (unsigned int itr = 0; itr < iterations; ++itr) {
-                    try {
-						func();
+                unused(i);
+                try {
+                    for (unsigned int itr = 0; itr < iterations; ++itr) {
+                        func();
                     }
-                    catch (std::exception& e) {
-                        error_handler_(e);
-                        break;
-                    };
                 }
+                catch (std::exception& e) {
+                    // if task failed we shouldn't try additional iterations.
+                    error_handler_(e);
+                };
             });
         }
     }

@@ -3,6 +3,10 @@
 
 #pragma once
 
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "Components/InputComponent.h"
+#include "GameFramework/PlayerInput.h"
 #include <string>
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -25,12 +29,8 @@ class UAirBlueprintLib : public UBlueprintFunctionLibrary
     GENERATED_BODY()
 
 public:
-    static void LogMessageString(const std::string &prefix, const std::string &suffix, LogDebugLevel level, float persist_sec);
-
-    UFUNCTION(BlueprintCallable, Category = "Utilities")
+    static void LogMessageString(const std::string &prefix, const std::string &suffix, LogDebugLevel level, float persist_sec = 60);
     static void LogMessage(const FString &prefix, const FString &suffix, LogDebugLevel level, float persist_sec = 60);
-    
-    UFUNCTION(BlueprintCallable, Category = "Utilities")
     static float GetWorldToMetersScale(const AActor* context);
 
     template<typename T>
@@ -39,15 +39,9 @@ public:
     static T* FindActor(const UObject* context, FString name);
     template<typename T>
     static void FindAllActor(const UObject* context, TArray<AActor*>& foundActors);
-
-    UFUNCTION(BlueprintCallable, Category = "Utilities")
     static bool HasObstacle(const AActor* actor, const FVector& start, const FVector& end, const AActor* ignore_actor = nullptr, ECollisionChannel collison_channel = ECC_Visibility);
-    UFUNCTION(BlueprintCallable, Category = "Utilities")
     static bool GetObstacle(const AActor* actor, const FVector& start, const FVector& end, FHitResult& hit, const AActor* ignore_actor = nullptr, ECollisionChannel collison_channel = ECC_Visibility);
-    UFUNCTION(BlueprintCallable, Category = "Utilities")
     static bool GetLastObstaclePosition(const AActor* actor, const FVector& start, const FVector& end, FHitResult& hit, const AActor* ignore_actor = nullptr, ECollisionChannel collison_channel = ECC_Visibility);
-
-    UFUNCTION(BlueprintCallable, Category = "Utilities")
     static void FollowActor(AActor* follower, const AActor* followee, const FVector& offset, bool fixed_z = false, float fixed_z_val = 2.0f);
 
     template<class UserClass>
@@ -56,7 +50,26 @@ public:
         bool shift_key = false, bool control_key = false, bool alt_key = false, bool command_key = false);
 
     template<class UserClass>
-    static FInputAxisBinding& BindAxisToKey(const FName axis_name, const FKey in_key, UserClass* actor,
+    static FInputAxisBinding& BindAxisToKey(const FName axis_name, const FKey in_key, AActor* actor, UserClass* obj,
         typename FInputAxisHandlerSignature::TUObjectMethodDelegate<UserClass>::FMethodPtr func);
+    template<class UserClass>
+    static FInputAxisBinding& BindAxisToKey(const FInputAxisKeyMapping& axis, AActor* actor, UserClass* obj,
+        typename FInputAxisHandlerSignature::TUObjectMethodDelegate<UserClass>::FMethodPtr func);
+
+    static int RemoveAxisBinding(const FInputAxisKeyMapping& axis, FInputAxisBinding* axis_binding, AActor* actor);
+
+    static void EnableInput(AActor* actor);
+
+    static bool getLogMessagesHidden()
+    {
+        return log_messages_hidden;
+    }
+    static void setLogMessagesHidden(bool is_hidden)
+    {
+        log_messages_hidden = is_hidden;
+    }
+
+private:
+    static bool log_messages_hidden;
 };
 

@@ -1,0 +1,138 @@
+<launch>
+
+    <!-- MAVROS posix SITL environment launch script -->
+
+    <arg name="debug" default="false"/>
+    <arg name="verbose" default="false"/>
+    <arg name="paused" default="false"/>
+
+    <arg name="est" default="ekf2"/>
+    <arg name="vehicle" default="iris"/>
+
+    <arg name="headless" default="false"/>
+    <arg name="gui" default="true"/>
+    <arg name="ns" default="/"/>
+
+    <arg name="pluginlists_yaml" default="$(find mavros)/launch/px4_pluginlists.yaml" />
+    <arg name="config_yaml" default="$(find mavros)/launch/px4_config.yaml" />
+
+    <!-- UAV1 iris_1-->
+    <group ns="Quad9">
+        <arg name="fcu_url" default="udp://:14540@localhost:14557"/>
+        <arg name="gcs_url" value=""/>
+        <arg name="tgt_system" value="1"/> 
+        <arg name="tgt_component" value="1"/>
+        <arg name="rcS1" default="$(find px4)/posix-configs/SITL/init/$(arg est)/$(arg vehicle)_1"/>
+        <arg name="ID" value="1"/>
+
+        <include file="$(find px4)/launch/single_vehcile_spawn.launch">
+            <arg name="x" value="0"/>
+            <arg name="y" value="0"/>
+            <arg name="z" value="1"/>
+            <arg name="R" value="0"/>
+            <arg name="P" value="0"/>
+            <arg name="Y" value="0"/>
+            <arg name="vehicle" value="$(arg vehicle)"/>
+            <arg name="rcS" value="$(arg rcS1)"/>
+            <arg name="mavlink_udp_port" value="14560"/>
+            <arg name="ID" value="$(arg ID)"/>
+        </include>
+
+        <include file="$(find mavros)/launch/node.launch">
+            <arg name="pluginlists_yaml" value="$(arg pluginlists_yaml)" />
+            <arg name="config_yaml" value="$(arg config_yaml)" />
+
+            <arg name="fcu_url" value="$(arg fcu_url)" />
+            <arg name="gcs_url" value="$(arg gcs_url)" />
+            <arg name="tgt_system" value="$(arg tgt_system)" />
+            <arg name="tgt_component" value="$(arg tgt_component)" />
+        </include>
+
+        <node pkg="offboard_control" name="Quad9_offboard" type="offboard_control_node" output="screen">
+            <param name="att_mode_rate" value="40"/>
+            <param name="pva_mode_rate" value="20"/>
+            <param name="landing_z" value="0.11"/>
+            <param name="takeoff_z" value="1.4"/>
+            <param name="takeoff_Kp" value="1.0" />
+            <param name="landing_Kp" value="1.0" />
+
+            <!-- PVA Control parameters -->
+            <param name="mass" value="1.535"/>       <!-- kg -->
+            <param name="gz" value="9.81"/>          <!-- m/s^2 -->
+            <param name="thrustRatio" value="1.7"/>  <!-- maxThrust/Weight -->
+            <param name="kpx" value="10"/>
+            <param name="kpy" value="10"/>
+            <param name="kpz" value="10"/>
+            <param name="kvx" value="5"/>
+            <param name="kvy" value="5"/>
+            <param name="kvz" value="7.5"/>
+            <param name="kix" value="0"/>
+            <param name="kiy" value="0"/>
+            <param name="kiz" value="0"/>
+            <param name="maxInteg_x" value="0"/>
+            <param name="maxInteg_y" value="0"/>
+            <param name="maxInteg_z" value="0"/>
+        </node>
+    </group>
+
+    <!-- UAV2 iris_2 -->
+    <group ns="Quad10">
+        <arg name="fcu_url" default="udp://:14541@localhost:14559"/>
+        <arg name="gcs_url" value=""/>
+        <arg name="tgt_system" value="2"/> 
+        <arg name="tgt_component" value="1"/>
+        <arg name="rcS2" default="$(find px4)/posix-configs/SITL/init/$(arg est)/$(arg vehicle)_2"/>
+        <arg name="ID" value="2"/>
+
+        <include file="$(find px4)/launch/single_vehcile_spawn.launch">
+            <arg name="x" value="10"/>
+            <arg name="y" value="0"/>
+            <arg name="z" value="1"/>
+            <arg name="R" value="0"/>
+            <arg name="P" value="0"/>
+            <arg name="Y" value="0"/>
+            <arg name="vehicle" value="$(arg vehicle)"/>
+            <arg name="rcS" value="$(arg rcS2)"/>
+            <arg name="mavlink_udp_port" value="14562"/>
+            <arg name="ID" value="$(arg ID)"/>
+        </include>
+
+        <include file="$(find mavros)/launch/node.launch">
+            <arg name="pluginlists_yaml" value="$(arg pluginlists_yaml)" />
+            <arg name="config_yaml" value="$(arg config_yaml)" />
+
+            <arg name="fcu_url" value="$(arg fcu_url)" />
+            <arg name="gcs_url" value="$(arg gcs_url)" />
+            <arg name="tgt_system" value="$(arg tgt_system)" />
+            <arg name="tgt_component" value="$(arg tgt_component)" />
+        </include>
+
+        <node pkg="offboard_control" name="Quad10_offboard" type="offboard_control_node" output="screen">
+            <param name="att_mode_rate" value="40"/>
+            <param name="pva_mode_rate" value="20"/>
+            <param name="landing_z" value="0.11"/>
+            <param name="takeoff_z" value="1.4"/>
+            <param name="takeoff_Kp" value="1.0" />
+            <param name="landing_Kp" value="1.0" />
+
+            <!-- PVA Control parameters -->
+            <param name="mass" value="1.535"/>       <!-- kg -->
+            <param name="gz" value="9.81"/>          <!-- m/s^2 -->
+            <param name="thrustRatio" value="1.7"/>  <!-- maxThrust/Weight -->
+            <param name="kpx" value="10"/>
+            <param name="kpy" value="10"/>
+            <param name="kpz" value="10"/>
+            <param name="kvx" value="5"/>
+            <param name="kvy" value="5"/>
+            <param name="kvz" value="7.5"/>
+            <param name="kix" value="0"/>
+            <param name="kiy" value="0"/>
+            <param name="kiz" value="0"/>
+            <param name="maxInteg_x" value="0"/>
+            <param name="maxInteg_y" value="0"/>
+            <param name="maxInteg_z" value="0"/>
+        </node>
+    </group>
+
+</launch>
+<!-- vim: set et ft=xml fenc=utf-8 ff=unix sts=0 sw=4 ts=4 : -->

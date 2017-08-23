@@ -19,8 +19,11 @@ out own copy of the [PX4 setup instructions](px4.md) which is a bit more concise
 
 3. Get the PX4 source code and build the posix SITL version of PX4:
 ```
+mkdir -p PX4
+cd PX4
 git clone https://github.com/PX4/Firmware.git
 cd Firmware
+git checkout tags/v1.5.5 -b v1.5.5
 make posix_sitl_default
 ```
 4. Use following command to start PX4 firmware in SITL mode:
@@ -49,7 +52,51 @@ param set LPE_LAT 47.641468
 param set LPE_LON -122.140165
 ````
 
+You might also want to set this one so that the drone automatically hovers after each offboard control command
+(the default setting is to land)
+````
+param set COM_OBL_ACT 1
+````
+
 Now close Unreal app, restart `./build_posix_sitl_default/src/firmware/posix/px4` and re-start the unreal app.  
+
+## Check the Home Position
+
+If you are using DroneShell to execute commands (arm, takeoff, etc) then you should wait until the Home position is set.
+You will see the PX4 SITL console output this message:
+
+````
+INFO  [commander] home: 47.6414680, -122.1401672, 119.99
+INFO  [tone_alarm] home_set
+````
+
+Now DroneShell 'pos' command should report this position and the commands should be accepted by PX4.  If you attempt to
+takeoff without a home position you will see the message:
+
+````
+WARN  [commander] Takeoff denied, disarm and re-try
+````
+
+After home position is set check the local position reported by 'pos' command :
+
+````
+Local position: x=-0.0326988, y=0.00656854, z=5.48506
+````
+
+If the z coordinate is large like this then takeoff might not work as expected.  Resetting the SITL and simulation 
+should fix that problem.
+
+## No Remote Control
+
+If you plan to fly with no remote control, just using DroneShell commands for example, then you will need to set the
+following parameters to stop the PX4 from triggering "failsafe mode on" every time a move command is finished.
+
+````
+param set NAV_RCL_ACT 0
+param set NAV_DLL_ACT 0
+````
+
+NOTE: Do `NOT` do this on a real drone as it is too dangerous to fly without these failsafe measures.
 
 ## Using VirtualBox Ubuntu
 
@@ -57,14 +104,10 @@ If you want to run the above posix_sitl in a `VirtualBox Ubuntu` machine then it
 So in this case you need to edit the [settings file](settings.md) and change the UdpIp and SitlIp to the ip address of your virtual machine
 set the  LocalIpAddress to the address of your host machine running the Unreal engine. 
 
-## Using Joystick/Gamepad (Alternative to RC)
-Why do you need RC for simulator? Because usual joysticks are not very accurate and in fact very "noisy" for flying! 
-We have tried it and gladly switched back to regular RC. But just in case you want to try it as well, here are the instructions.
+## Remote Controller
 
-1. Connect Joystick/Gamepad such as XBox 360 controller to PC. Start QGroundControl.
-2. Click on the purple "Q" icon on left in tool bar to reveal the Preferences panel.
-3. Go to General tab and check the Virtual Joystick checkbox.
-4. Go back to settings screen (gears icon), click on Parameters tab, type `COM_RC_IN_MODE` in search box and change its value to either `Joystick/No RC Checks` or `Virtual RC by Joystick`.
-5. You should now see a new tab "Joystick" where you can do the calibration.
+There are several options for flying the simulated drone using a remote control or joystick like xbox gamepad.
+See [remote controllers](remote_controls.md)
 
-A Playstation 3 controller is confirmed to work as an AirSim controller. On Windows, an emulator to make it look like an Xbox 360 controller, is required however. Many different solutions are available online, the [x360ce](https://github.com/x360ce/x360ce) _Xbox 360 Controller Emulator_ is an excellent suggestion to get everything configured easily.
+
+

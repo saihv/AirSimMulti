@@ -39,3 +39,41 @@ VS2015 update 3 (x86) with VC++
 Cmake 3.7 (x86)
 ````
 Even though cmake 3.7 says it added support for VS 2017 folks are reporting build issues with that.
+
+### WARN  [commander] Takeoff denied, disarm and re-try
+
+This happens if you try and take off when  PX4 still has not computed the home position.  PX4 will report the home
+position once it is happy with the GPS signal, and you will see these messages:
+
+````
+INFO  [commander] home: 47.6414680, -122.1401672, 119.99
+INFO  [tone_alarm] home_set
+````
+
+Up until this point in time, however, the PX4 will reject takeoff commands.
+
+
+### What do the colors mean in the Segmentation View ?
+
+See [Camera Views](camera_views.md) for information on the camera views and how to change them.
+
+### Unreal 4.15 doesn't look as good as 4.14
+
+Unreal 4.15 added the ability for Foliage LOD dithering to be disabled on a case-by-case basis by unchecking the `Dithered LOD Transition` checkbox in the foliage materials. Note that all materials used on all LODs need to have the checkbox checked in order for dithered LOD transitions to work.  When checked the transition of generated foliage will be a lot smoother and will look better than 4.14.
+
+
+### Can I use an xbox controller to fly?
+Yes, see [xbox controller](xbox_controller.md) for details.
+
+### When I tell the drone to do something it always lands
+
+For example, you use DroneShell `moveToPosition -z -20 -x 50 -y 0` which it does, but when it gets to the target location the
+drone starts to land.  This is the default behavior of PX4 when offboard mode completes.  To set the drone to hover instead
+set this PX4 parameter:
+````
+param set COM_OBL_ACT 1
+````
+
+### Can I build a hexacopter with AirSim?
+
+Definitely, see [how to build a hexacopter](hexacopter.md).

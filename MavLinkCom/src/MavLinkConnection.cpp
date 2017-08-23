@@ -12,11 +12,6 @@ MavLinkConnection::MavLinkConnection()
 	pImpl.reset(new MavLinkConnectionImpl());
 }
 
-std::vector<SerialPortInfo> MavLinkConnection::findSerialPorts(int vid, int pid)
-{
-	return MavLinkConnectionImpl::findSerialPorts(vid, pid);
-}
-
 std::shared_ptr<MavLinkConnection>  MavLinkConnection::connectSerial(const std::string& nodeName, std::string portName, int baudrate, const std::string initString)
 {
 	return MavLinkConnectionImpl::connectSerial(nodeName, portName, baudrate, initString);
@@ -68,7 +63,10 @@ void MavLinkConnection::ignoreMessage(uint8_t message_id)
 {
     pImpl->ignoreMessage(message_id);
 }
-
+int MavLinkConnection::prepareForSending(MavLinkMessage& msg)
+{
+    return pImpl->prepareForSending(msg);
+}
 
 std::string MavLinkConnection::getName()
 {
@@ -112,7 +110,7 @@ MavLinkConnection::~MavLinkConnection() {
 }
 void MavLinkConnection::join(std::shared_ptr<MavLinkConnection> remote, bool subscribeToLeft, bool subscribeToRight)
 {
-	pImpl->join(remote);
+	pImpl->join(remote, subscribeToLeft, subscribeToRight);
 }
 
 // get the next telemetry snapshot, then clear the internal counters and start over.  This way each snapshot

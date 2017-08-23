@@ -22,12 +22,12 @@ class FileSystem
 
 public:
 
-	// please use the combine() method instead.
-	static const char kPathSeparator =
+    // please use the combine() method instead.
+    static const char kPathSeparator =
 #ifdef _WIN32
-		'\\';
+        '\\';
 #else
-		'/';
+        '/';
 #endif
 
     static std::string createDirectory(std::string fullPath);
@@ -69,13 +69,13 @@ public:
         return parentFolder + kPathSeparator + child;
     }
 
-	static void removeLeaf(std::string& path) {
-		size_t size = path.size();
-		size_t pos = path.find_last_of('/');
-		if (pos != std::string::npos) {
-			path.erase(pos, size - pos);
-		}
-	}
+    static void removeLeaf(std::string& path) {
+        size_t size = path.size();
+        size_t pos = path.find_last_of('/');
+        if (pos != std::string::npos) {
+            path.erase(pos, size - pos);
+        }
+    }
 
 
     static std::string getFileExtension(const std::string str)
@@ -99,9 +99,23 @@ public:
         std::string logfolder = Utils::to_string(Utils::now(), "%Y-%m-%d");
         std::string fullPath = combine(getAppDataFolder(), logfolder);
         std::string timestamp = add_timestamp ? Utils::to_string(Utils::now()) : "";
-        std::stringstream filename_ss;
-        filename_ss << ensureFolder(fullPath) << kPathSeparator << prefix << suffix << timestamp << extension;
-        return filename_ss.str();
+
+        //TODO: because this bug we are using alternative code with stringstream
+        //https://answers.unrealengine.com/questions/664905/unreal-crashes-on-two-lines-of-extremely-simple-st.html
+
+        std::string filename;
+        filename.append(ensureFolder(fullPath))
+            .push_back(kPathSeparator);
+        filename.append(prefix)
+            .append(suffix)
+            .append(timestamp)
+            .append(extension);
+
+        return filename;
+
+        //std::stringstream filename_ss;
+        //filename_ss << ensureFolder(fullPath) << kPathSeparator << prefix << suffix << timestamp << extension;
+        //return filename_ss.str();
     }
 
     static void openTextFile(std::string filepath, std::ifstream& file){
@@ -148,7 +162,7 @@ public:
         std::string filepath = getLogFileNamePath("log_", suffix, ".tsv", true);
         createTextFile(filepath, flog);
 
-        Utils::logMessage("log file started: %s", filepath.c_str());
+        Utils::log(Utils::stringf("log file started: %s", filepath.c_str()));
         flog.exceptions(flog.exceptions() | std::ios::failbit | std::ifstream::badbit);
         return filepath;
     }
