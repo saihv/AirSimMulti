@@ -1,4 +1,5 @@
-<<<<<<< HEAD
+**With the official version of AirSim adding full support for multiple vehicles as well as recording from multiple cameras, this version is deprecated.**
+
 # Welcome to AirSim
 
 AirSim is a simulator for drones (and soon other vehicles) built on Unreal Engine. It is open-source, cross platform and supports hardware-in-loop 
@@ -101,7 +102,3 @@ If you run into problems, check the [FAQ](docs/faq.md) and feel free to post iss
 
 ## License
 This project is released under MIT License. Please review [License file](LICENSE) for more details.
-=======
-# AirSim
-AirSim with multiple vehicules enabled
->>>>>>> ac96e80b1177539b7f082d18a68e4ac5e791ce9d
